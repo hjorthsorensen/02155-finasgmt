@@ -1,0 +1,41 @@
+# --- Scala / SBT / Chisel ---
+target/
+project/target/
+project/project/
+test_run_dir/
+*.vcd
+
+# --- IDEs (Metals, Bloop, VS Code) ---
+.metals/
+.bloop/
+.bsp/
+.settings/
+.vscode/
+*.swp
+*.swo
+
+# --- Vivado / FPGA Tools ---
+*.log
+*.jou
+*.str
+*.pb
+.Xil/
+vending/.Xil/
+usage_statistics_webtalk.*
+*.v
+*.fir
+project/metals.sbt
+firrtl_black_box_resource_files.f
+Top.anno.json
+
+tile_generator_custom/here.png
+tile_generator_custom/image_data.mem
+
+firrtl_black_box_resource_files.f
+Top.anno.json
+*.png
+Top.bit
+build_flash.bat
+dfx_runtime.txt
+*.bak
+clockInfo.txt

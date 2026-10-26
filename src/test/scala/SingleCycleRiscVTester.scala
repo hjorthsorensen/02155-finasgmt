@@ -1,22 +1,22 @@
-import chisel3.iotesters._
-import org.scalatest._
+import chisel3._
+import chiseltest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class RiscVSpec extends FlatSpec with Matchers {
+class RiscVSpec extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   "RiscV" should "pass" in {
-    chisel3.iotesters.Driver.execute(Array("--generate-vcd-output", "on"), () => new SingleCycleRiscV()) { c =>
-      new PeekPokeTester(c) {
+    test(new SingleCycleRiscV()).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
-        def printReg() = {
-          for (i <- 0 until 4) {
-            print(peek(dut.io.regDeb(i)).toString + " ")
-          }
-          println()
-        }
-
+      def printReg(): Unit = {
         for (i <- 0 until 4) {
-          printReg()
-          step(1)
+          print(dut.io.regDeb(i).peekInt().toString + " ")
         }
+        println()
+      }
+
+      for (i <- 0 until 4) {
+        printReg()
+        dut.clock.step(1)
       }
     }
   }

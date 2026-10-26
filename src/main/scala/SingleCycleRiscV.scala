@@ -18,8 +18,7 @@ class SingleCycleRiscV extends Module {
     0x002081b3
   ) // add x3 x1 x2
 
-  // A little bit of functional magic to convert the Scala Int Array to a Chisel Vec of UInt
-  val imem = VecInit(program.map(_.U(32.W)))
+  val imem = VecInit(program.toIndexedSeq.map(_.U(32.W)))
 
   val pc = RegInit(0.U(32.W))
 

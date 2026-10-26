@@ -1,8 +1,7 @@
 import chisel3._
 import chisel3.util._
 
-/**
-  * Author Martin Schoeberl (martin@jopdesign.com)
+/** Author Martin Schoeberl (martin@jopdesign.com)
   *
   * A single-cycle implementation of RISC-V is practically an ISA simulator.
   */
@@ -12,16 +11,15 @@ class SingleCycleRiscV extends Module {
     val done = Output(Bool())
   })
 
-
   // TODO: the program should be read in from a file
   val program = Array[Int](
     0x00200093, // addi x1 x0 2
     0x00300113, // addi x2 x0 3
-    0x002081b3) // add x3 x1 x2
+    0x002081b3
+  ) // add x3 x1 x2
 
   // A little bit of functional magic to convert the Scala Int Array to a Chisel Vec of UInt
   val imem = VecInit(program.map(_.U(32.W)))
-
 
   val pc = RegInit(0.U(32.W))
 

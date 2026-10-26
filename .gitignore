@@ -39,3 +39,20 @@ build_flash.bat
 dfx_runtime.txt
 *.bak
 clockInfo.txt
+
+# --- Generated Chisel output ---
+*.anno.json
+*.sv
+
+# --- Scala build caches ---
+*.class
+.scala-build/
+.cache/
+
+# --- IntelliJ ---
+.idea/
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+desktop.ini

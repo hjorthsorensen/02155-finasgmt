@@ -2,16 +2,18 @@ import chisel3._
 
 class Top extends Module {
   val io = IO(new Bundle {
+    // -- Inputs -- //
+
+    // -- Outputs -- //
     val regDeb = Output(Vec(4, UInt(32.W))) // debug output for the tester
     val done = Output(Bool())
   })
 
-  // INCOMING MODULES //
+// -- Program Counter -- //
   val pcModule = Module(new ProgramCounter)
-
-  // MODULES LINKING //
-  pcModule.io.jump := false.B
-  pcModule.io.target := 0.U
+  val pc = pcModule.io.pc
+  // ellers compiler lortet ikke
+  pcModule.io.nextPC := pc + 4.U
 
   // TODO: there should be an elegant way to express this
   // We initialize the register file to 0 for a nicer display

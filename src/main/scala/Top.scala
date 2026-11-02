@@ -13,16 +13,16 @@ class Top extends Module {
   val pcModule = Module(new ProgramCounter)
   val pc = pcModule.io.pc
   // ellers compiler lortet ikke
-  pcModule.io.nextPC := pc + 4.U
+  pcModule.io.nextPC := DontCare
 
   // TODO: there should be an elegant way to express this
   // We initialize the register file to 0 for a nicer display
   // In a real processor this is usually not done
-  val reg = RegInit(VecInit(Seq.fill(4)(0.U(32.W))))
+  val regDebug = RegInit(VecInit(Seq.fill(4)(0.U(32.W))))
 
   // done should be set when the program ends, and the tester shall stop
   io.done := true.B
 
   // Make the register file visible to the tester
-  io.regDeb := reg
+  io.regDeb := regDebug
 }

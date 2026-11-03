@@ -1,6 +1,8 @@
 import chisel3._
 import chisel3.util._
 
+// https://www.engineering.upenn.edu/~cis2400/26fa/references/riscv_encoding.pdf
+
 class Decode extends Module {
   val io = IO(new Bundle {
     // -- Inputs -- //
@@ -11,7 +13,7 @@ class Decode extends Module {
     val rs1    = Output(UInt(5.W)) // source register 1
     val rs2    = Output(UInt(5.W)) // source register 2
     val rd     = Output(UInt(5.W)) // destination register
-    val funct3 = Output(UInt(3.W)) 
+    val funct3 = Output(UInt(3.W))
     val funct7 = Output(UInt(7.W))
 
     // -- Decode Controls -- //
@@ -41,7 +43,7 @@ class Decode extends Module {
   // -- Switch statement to decode instruction based on opcode -- //
   switch(io.opcode) {
     is("b0110011".U) { // R-type (add, sub, sll, srl, sra, slt, sltu, and, or, xor)
-      io.regWrite := true.B 
+      io.regWrite := true.B
       io.aluSrcA  := 0.U     // need rs1
       io.aluSrcB  := false.B // need rs2
       io.aluOp    := io.funct7(5) ## io.funct3

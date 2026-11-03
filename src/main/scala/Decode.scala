@@ -1,19 +1,71 @@
 import chisel3._
+import chisel3.util._
 
 class Decode extends Module {
   val io = IO(new Bundle {
     // -- Inputs -- //
     val instruction = Input(UInt(32.W))
 
-    // -- Outputs -- //
+    // -- Instruction Fields -- //
     val opcode = Output(UInt(7.W))
-
-    val rs1 = Output(UInt(5.W))
-    val rs2 = Output(UInt(5.W))
-    val rd = Output(UInt(5.W))
-
+    val rs1    = Output(UInt(5.W))
+    val rs2    = Output(UInt(5.W))
+    val rd     = Output(UInt(5.W))
     val funct3 = Output(UInt(3.W))
     val funct7 = Output(UInt(7.W))
+
+    // -- Decode Controls -- //
+    val regWrite = Output(Bool())    // Write to register file or not
+    val aluSrcA  = Output(UInt(2.W)) // 0 = rs1, 1 = PC, 2 = zero
+    val aluSrcB  = Output(Bool())    // 0 = rs2, 1 = immediate
+    val aluOp    = Output(UInt(4.W)) // funct7(5), funct3: 0=add 8=sub 1=sll 2=slt 3=sltu 4=xor 5=srl 13=sra 6=or 7=and
+    val isEcall  = Output(Bool())    // Is the instruction an ecall
   })
 
+  // -- Decode the instruction -- //
+  val instruction = io.instruction
+  io.opcode := instruction(6, 0)   // Opcode decides the instruction type
+  io.rd     := instruction(11, 7)  // Destination register
+  io.funct3 := instruction(14, 12) // Function 3 field (used for ALU operations, family of instructions)
+  io.rs1    := instruction(19, 15) // Source register 1
+  io.rs2    := instruction(24, 20) // Source register 2
+  io.funct7 := instruction(31, 25) // Function 7 field (used for ALU operations, specific instruction )
+
+  // -- Default values -- //
+  io.regWrite := false.B
+  io.aluSrcA  := 0.U
+  io.aluSrcB  := false.B
+  io.aluOp    := 0.U // add instruction per default
+  io.isEcall  := false.B
+
+  // -- Switch statement to decode instruction based on opcode -- //
+  switch(io.opcode) {
+    is("b0110011".U) { // R-type (add, sub, sll, srl, sra, slt, sltu, and, or, xor)
+      io.regWrite := true.B
+      io.aluSrcA  := 0.U     // need rs1
+      io.aluSrcB  := false.B // need rs2
+      io.aluOp    := io.funct7(5) ## io.funct3
+    }
+    is("b0010011".U) { // I-type (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
+      io.regWrite := true.B
+      io.aluSrcA  := 0.U    // need rs1
+      io.aluSrcB  := true.B // need immediate
+      val alt = io.funct3 === "b101".U && io.funct7(5)
+      // funct7(5) selects srai over srli. for all other I-type operations, it is an immediate bit, so alt = 0
+      io.aluOp := alt ## io.funct3
+    }
+    is("b0110111".U) { // LUI (0 + imm)
+      io.regWrite := true.B
+      io.aluSrcA  := 2.U    // zero
+      io.aluSrcB  := true.B // need immediate
+    }
+    is("b0010111".U) { // auipc (pc + imm)
+      io.regWrite := true.B
+      io.aluSrcA  := 1.U    // pc
+      io.aluSrcB  := true.B // need immediate
+    }
+    is("b1110011".U) { // ecall
+      io.isEcall := true.B
+    }
+  }
 }

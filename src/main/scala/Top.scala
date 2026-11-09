@@ -1,5 +1,6 @@
 import chisel3._
 import chisel3.util._
+import java.nio.file.{Files, Paths}
 
 class Top(fileProgram:String) extends Module {
   val io = IO(new Bundle {

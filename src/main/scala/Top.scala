@@ -28,7 +28,7 @@ val readModule = Module(new Read(fileProgram))
 
 
 
-
+//connections has to be after we create modules; otherwise decode module cant see readModule for example.
   // -- CONNECTIONS -- //
 
   //Pcmodule -------------------

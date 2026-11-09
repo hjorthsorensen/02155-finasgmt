@@ -1,7 +1,7 @@
 import chisel3._
 import chisel3.util._
 
-class Top extends Module {
+class Top(fileProgram:String) extends Module {
   val io = IO(new Bundle {
     // -- Inputs -- //
 
@@ -14,14 +14,40 @@ class Top extends Module {
   val pcModule = Module(new ProgramCounter)
   val pc       = pcModule.io.pc
   // ellers compiler lortet ikke
-  pcModule.io.nextPC := DontCare
 
 // -- Decode -- //
   val decodeModule = Module(new Decode)
-  decodeModule.io.instruction := DontCare
   // needs to be instruction but this compiles for now
 
-  // TODO: there should be an elegant way to express this
+// -- Read -- //
+val readModule = Module(new Read(fileProgram))
+
+
+
+
+
+
+
+
+  // -- CONNECTIONS -- //
+
+  //Pcmodule -------------------
+  pcModule.io.nextPC := DontCare
+  //Decode ---------------------
+  decodeModule.io.instruction := readModule.io.instruction_out
+  //Read -----------------------
+    readModule.io.pc_in := pcModule.io.pc
+
+
+
+
+  
+
+
+
+  //from schoeberl with love
+
+    // TODO: there should be an elegant way to express this
   // We initialize the register file to 0 for a nicer display
   // In a real processor this is usually not done
   val regDebug = RegInit(VecInit(Seq.fill(4)(0.U(32.W))))

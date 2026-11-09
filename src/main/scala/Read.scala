@@ -13,9 +13,17 @@ class Read(programFile: String) extends Module {
 
 
 // pc_in -> index in memory -> instruction -> out
-  //val memory  = Files.readAllBytes(Paths.get(programFile))
-  val memoryVec = VecInit(Files.readAllBytes(Paths.get(programFile)).map(_.U(32.W)))
 
-  io.instruction_out := memoryVec(io.pc_in)
+//memory loads entire file passed to program at generation; memoryBytes loads
+//into Bytes, and instruction out is then passed onwards as those four concatenated,
+//little endian direction.
+  val memory  = Files.readAllBytes(Paths.get(programFile))
+  val memoryBytes = VecInit(memory.map(b => (b & 0xFF).U(8.W)).toSeq)
+
+
+  io.instruction_out := Cat(memoryBytes(io.pc_in+3.U),
+  memoryBytes(io.pc_in+2.U),
+  memoryBytes(io.pc_in+1.U),
+  memoryBytes(io.pc_in))
 
 }

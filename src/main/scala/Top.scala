@@ -1,7 +1,7 @@
 import chisel3._
 import chisel3.util._
 import java.nio.file.{Files, Paths}
-
+//see flow chart here: https://app.diagrams.net/#Lflow%20dia%2009-11-26.drawio#%7B%22pageId%22%3A%22jD8GbT7tNcJAKHjxoHZN%22%7D
 class Top(fileProgram:String) extends Module {
   val io = IO(new Bundle {
     // -- Inputs -- //

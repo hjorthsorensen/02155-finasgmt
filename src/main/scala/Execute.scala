@@ -1,4 +1,5 @@
 import chisel3._
+import chisel3.util._
 
 class Execute extends Module {
   val io = IO(new Bundle {
@@ -18,4 +19,8 @@ class Execute extends Module {
     // VI kan vælge om vi har lyst til at videre inddele så at vi har en seperat ALU, BRANCH og eller MEMORY, eller vi bare har 1 fil med execute.
 
 
+
+    switch (io.opcode){
+    is ("000b".U) {}
+  }
 }

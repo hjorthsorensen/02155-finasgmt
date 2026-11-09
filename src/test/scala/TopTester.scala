@@ -5,7 +5,7 @@ import org.scalatest.matchers.should.Matchers
 
 class RiscVSpec extends AnyFlatSpec with ChiselScalatestTester with Matchers {
   "RiscV" should "pass" in {
-    test(new SingleCycleRiscV()).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
+    test(new Top()).withAnnotations(Seq(WriteVcdAnnotation)) { dut =>
 
       def printReg(): Unit = {
         for (i <- 0 until 4) {

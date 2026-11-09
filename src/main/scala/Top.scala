@@ -1,7 +1,8 @@
 import chisel3._
 import chisel3.util._
+import java.nio.file.{Files, Paths}
 
-class Top extends Module {
+class Top(programFile: String) extends Module {
   val io = IO(new Bundle {
     // -- Inputs -- //
 
@@ -20,6 +21,9 @@ class Top extends Module {
   val decodeModule = Module(new Decode)
   decodeModule.io.instruction := DontCare
   // needs to be instruction but this compiles for now
+
+// -- Read -- //
+  val readModule = Module(new Read(programFile))
 
   // TODO: there should be an elegant way to express this
   // We initialize the register file to 0 for a nicer display

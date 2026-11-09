@@ -7,14 +7,19 @@ class Top extends Module {
 
     // -- Outputs -- //
     val regDeb = Output(Vec(4, UInt(32.W))) // debug output for the tester
-    val done = Output(Bool())
+    val done   = Output(Bool())
   })
 
 // -- Program Counter -- //
   val pcModule = Module(new ProgramCounter)
-  val pc = pcModule.io.pc
+  val pc       = pcModule.io.pc
   // ellers compiler lortet ikke
   pcModule.io.nextPC := DontCare
+
+// -- Decode -- //
+  val decodeModule = Module(new Decode)
+  decodeModule.io.instruction := DontCare
+  // needs to be instruction but this compiles for now
 
   // TODO: there should be an elegant way to express this
   // We initialize the register file to 0 for a nicer display

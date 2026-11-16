@@ -20,4 +20,10 @@ class RiscVSpec extends AnyFlatSpec with ChiselScalatestTester with Matchers {
       }
     }
   }
+  test(new Top("test_add.bin")) { dut =>
+  
+
+  }
 }
+
+

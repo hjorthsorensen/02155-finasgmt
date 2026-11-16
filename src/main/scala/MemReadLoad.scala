@@ -13,6 +13,7 @@ class MemReadLoad() extends Module {
   })
 
   val memory = VecInit(Seq.fill(1024)(0.U(8.W))) // 1 kb of dynamic ram:)
+    io.wordOut := 0.U
   switch(io.size) {
     is(1.U) {
       when(io.loadReady === 1.U) {
@@ -26,7 +27,7 @@ class MemReadLoad() extends Module {
       }
       when(io.saveReady === 1.U) {
         // save byte
-        memory(io.address) := io.wordIn(8, 0)
+        memory(io.address) := io.wordIn(7, 0)
       }
     }
     is(2.U) {
@@ -41,7 +42,7 @@ class MemReadLoad() extends Module {
       }
       when(io.saveReady === 1.U) {
         // save halfword
-        memory(io.address) := io.wordIn(16, 0)
+        memory(io.address) := io.wordIn(15, 0)
 
       }
     }
@@ -60,7 +61,7 @@ class MemReadLoad() extends Module {
       }
       when(io.saveReady === 1.U) {
         // save word
-        memory(io.address) := io.wordIn(32, 0)
+        memory(io.address) := io.wordIn(31, 0)
 
       }
 

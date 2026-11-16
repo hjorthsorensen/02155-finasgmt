@@ -13,55 +13,57 @@ class MemReadLoad() extends Module {
   })
 
   val memory = VecInit(Seq.fill(1024)(0.U(8.W))) // 1 kb of dynamic ram:)
-
-  switch(io.loadReady) { // load unsigned
-    is(1.U) {
-      switch(io.size) {
-        is(1.U) {
-          io.wordOut := memory(io.address)
-          // load byte
-        }
-        is(2.U) {
-          io.wordOut := Cat(memory(io.address+1.U)+memory(io.address))
-          // load hW
-        }
-        is(4.U) {
-          io.wordOut := Cat(memory(io.address+3.U)+memory(io.address+2.U)+memory(io.address+1.U)+memory(io.address))
-
-          // load w
-        }
-      }
-    }
-    is(2.U) { // load signed
-      switch(io.size) {
-        is(1.U) {
-
-          // load byte
-        }
-        is(2.U) {
-
-          // load hW
-        }
-        is(4.U) {
-
-          // load w
-        }
-      }
-
-    }
-  }
   switch(io.size) {
     is(1.U) {
+      when(io.loadReady === 1.U) {
+        // load unsignedbyte
+        io.wordOut := memory(io.address)
+      }
+      when(io.loadReady === 3.U) {
+        // load signed byte
+        io.wordOut := Cat(Fill(24, memory(io.address)(7)), memory(io.address))
 
-      // load byte
+      }
+      when(io.saveReady === 1.U) {
+        // save byte
+        memory(io.address) := io.wordIn(8, 0)
+      }
     }
     is(2.U) {
+      when(io.loadReady === 1.U) {
+        // load unsigned halfword
+        io.wordOut := Cat(memory(io.address + 1.U) + memory(io.address))
+        io.wordOut := memory(io.address)
+      }
+      when(io.loadReady === 3.U) {
+        // load signed halfWord
+        io.wordOut := Cat(Fill(16, memory(io.address + 1.U)(7)), memory(io.address + 1.U), memory(io.address))
+      }
+      when(io.saveReady === 1.U) {
+        // save halfword
+        memory(io.address) := io.wordIn(16, 0)
 
-      // load hW
+      }
     }
     is(4.U) {
+      when(io.loadReady === 1.U) {
+        // load unsigned word
+        io.wordOut :=
+          Cat(memory(io.address + 3.U) + memory(io.address + 2.U) + memory(io.address + 1.U) + memory(io.address))
 
-      // load w
+      }
+      when(io.loadReady === 3.U) {
+        // load signed word
+        io.wordOut :=
+          Cat(memory(io.address + 3.U) + memory(io.address + 2.U) + memory(io.address + 1.U) + memory(io.address))
+
+      }
+      when(io.saveReady === 1.U) {
+        // save word
+        memory(io.address) := io.wordIn(32, 0)
+
+      }
+
     }
   }
 }

@@ -2,7 +2,7 @@ import chisel3._
 import chisel3.util._
 import java.nio.file.{Files, Paths}
 //see flow chart here: https://app.diagrams.net/#Lflow%20dia%2009-11-26.drawio#%7B%22pageId%22%3A%22jD8GbT7tNcJAKHjxoHZN%22%7D
-class Top(fileProgram:String) extends Module {
+class Top(fileProgram: String) extends Module {
   val io = IO(new Bundle {
     // -- Inputs -- //
 
@@ -21,34 +21,30 @@ class Top(fileProgram:String) extends Module {
   // needs to be instruction but this compiles for now
 
 // -- Read -- //
-val readModule = Module(new Read(fileProgram))
+  val readModule = Module(new Read(fileProgram))
 
-
-
-
-
-
+// -- Immediate -- //
+  val immediateModule = Module(new Immediate)
 
 //connections has to be after we create modules; otherwise decode module cant see readModule for example.
-  // -- CONNECTIONS -- //
 
-  //Pcmodule -------------------
+// -- CONNECTIONS -- //
+
+// Pcmodule -------------------
   pcModule.io.nextPC := DontCare
-  //Decode ---------------------
+
+// Decode ---------------------
   decodeModule.io.instruction := readModule.io.instruction_out
-  //Read -----------------------
-    readModule.io.pc_in := pcModule.io.pc
 
+// Read -----------------------
+  readModule.io.pc_in := pcModule.io.pc
 
+// Immediate ------------------
+immediateModule.io.instruction := readModule.io.instruction_out
 
+  // from schoeberl with love
 
-  
-
-
-
-  //from schoeberl with love
-
-    // TODO: there should be an elegant way to express this
+  // TODO: there should be an elegant way to express this
   // We initialize the register file to 0 for a nicer display
   // In a real processor this is usually not done
   val regDebug = RegInit(VecInit(Seq.fill(4)(0.U(32.W))))

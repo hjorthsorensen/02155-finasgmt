@@ -56,7 +56,7 @@ class Decode extends Module {
       io.regWrite := true.B
       io.aluSrcA  := 0.U     // need rs1
       io.aluSrcB  := false.B // need rs2
-      io.aluOp    := io.funct7(5) ## io.funct3
+      io.aluOp    := Cat(io.funct7(5), io.funct3)
       io.memToReg := 0.U     // write ALU result to rd
     }
     is("b0010011".U) { // I-type (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
@@ -65,7 +65,7 @@ class Decode extends Module {
       io.aluSrcB  := true.B // need immediate
       val alt = io.funct3 === "b101".U && io.funct7(5)
       // funct7(5) selects srai over srli. for all other I-type operations, it is an immediate bit, so alt = 0
-      io.aluOp    := alt ## io.funct3
+      io.aluOp    := Cat(alt, io.funct3)
       io.memToReg := 0.U // write ALU result to rd
     }
     is("b0110111".U) { // LUI (0 + imm)

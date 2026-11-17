@@ -26,6 +26,9 @@ class Top(fileProgram: String) extends Module {
   })
 
 
+//connections has to be after we create modules; otherwise decode module cant see readModule for example.
+      // -- INITIALIZATION OF MODULES -- //
+
 // -- Decode -- //
   val decodeModule = Module(new Decode)
   // needs to be instruction but this compiles for now
@@ -36,19 +39,38 @@ class Top(fileProgram: String) extends Module {
 // -- Immediate -- //
   val immediateModule = Module(new Immediate)
 
-//connections has to be after we create modules; otherwise decode module cant see readModule for example.
+// -- Execute -- //
+  val executeModule = Module(new Execute())
 
-// -- CONNECTIONS -- //
+
+// -- CPU registers -- //
+val regs = RegInit(VecInit(Seq.fill(32)(0.U(32.W))))
+//not a module, but has to be created:)
+
+
+      // -- CONNECTIONS -- //
 
 // Pcmodule -------------------
   io.pc_in := DontCare
   io.pc_out := io.pc_in
 
+// Read -----------------------
+  readModule.io.pc_in := io.pc_out
+
+
 // Decode ---------------------
   decodeModule.io.instruction := readModule.io.instruction_out
 
-// Read -----------------------
-  readModule.io.pc_in := io.pc_out
+// Execute --------------------
+executeModule.io.opcode := decodeModule.io.opcode
+executeModule.io.funct3 := decodeModule.io.funct3
+executeModule.io.funct7 := decodeModule.io.funct7
+executeModule.io.imm := decodeModule.io.imm
+executeModule.io.rs1_val := decodeModule.io.rs1
+executeModule.io.rs2_val := decodeModule.io.rs2
+executeModule.io.rd := decodeModule.io.rd
+executeModule.io.pc := io.pc_out
+
 
 
 // Immediate ------------------
@@ -56,13 +78,18 @@ immediateModule.io.instruction := readModule.io.instruction_out
 
 
 // Debug --------------------
+  //readmodule
 io.dB_instruction_out := readModule.io.instruction_out
+
+  //decodemodule  
 io.dB_f3 := decodeModule.io.funct3
 io.dB_f7 := decodeModule.io.funct7
 io.dB_opcode :=decodeModule.io.opcode
 io.dB_rd := decodeModule.io.rd
 io.dB_rs1 := decodeModule.io.rs1
 io.dB_rs2  := decodeModule.io.rs2
+
+
   // from schoeberl with love
 
   // TODO: there should be an elegant way to express this

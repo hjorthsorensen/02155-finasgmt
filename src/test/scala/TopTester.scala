@@ -23,13 +23,9 @@ class TopTest extends AnyFlatSpec with ChiselScalatestTester {
     // tjek at PC fra top -> read -> instruction out -> decode -> execute -> top -> forfra
 
     println("Testing that pc can be set and changed, and that it changes instruction_out.")
-    dut.io.pc_in.poke(0.U)
-    dut.clock.step(1)
     dut.io.pc_out.expect(0.U)
     println("Testing that first instruction got to Read.")
     dut.io.dB_instruction_out.expect("b00000111110100000000001010010011".U)
-
-    dut.io.pc_in.poke(4.U)
     dut.clock.step(1)
     dut.io.pc_out.expect(4.U)
 
@@ -43,6 +39,23 @@ class TopTest extends AnyFlatSpec with ChiselScalatestTester {
     dut.io.dB_rd.expect("b00110".U)
     dut.io.dB_f3.expect("b000".U)
     dut.io.dB_f7.expect("b0000000".U)
+    dut.io.dB_regs("b00101".U).expect(125.U)
+    dut.clock.step(1)
+    dut.io.dB_regs("b00110".U).expect(125.U)
+
+    //now testing if final values are correct
+    dut.clock.step(5)
+
+    dut.io.dB_regs(5).expect(((BigInt(1) << 32) - 100).U) //t0 (111111..... - 100 = signed -100.)
+    dut.io.dB_regs(6).expect(125.U) //t1
+    dut.io.dB_regs(7).expect(160.U) //t2
+
+    dut.io.dB_regs(28).expect(60.U) //t3
+
+    dut.io.dB_regs(10).expect(10.U) //a0
+
+
+
 
 
 

@@ -21,6 +21,7 @@ class Top(fileProgram: String) extends Module {
     val dB_rd = Output(UInt(5.W))
     val dB_f3 = Output(UInt(3.W))
     val dB_f7 = Output(UInt(7.W))
+    val dB_regs = Output(Vec(32,UInt(32.W)))
     
     
   })
@@ -100,6 +101,8 @@ io.dB_rd := decodeModule.io.rd
 io.dB_rs1 := decodeModule.io.rs1
 io.dB_rs2  := decodeModule.io.rs2
 
+  //regs
+  io.dB_regs := regs
 
   // from schoeberl with love
 

@@ -26,14 +26,26 @@ class TopTest extends AnyFlatSpec with ChiselScalatestTester {
     dut.io.pc_in.poke(0.U)
     dut.io.pc_out.expect(0.U)
     println("Testing that first instruction got to Read.")
-    dut.readModule.io.instruction_out.expect("b00000111110100000000001010010011".U)
+    dut.io.dB_instruction_out.expect("b00000111110100000000001010010011".U)
 
     dut.io.pc_in.poke(4.U)
     dut.io.pc_out.expect(4.U)
 
     println("Testing that second instruction got to Read.")
-    dut.readModule.io.instruction_out.expect("b00000000010100000000001100110011".U)
-    
+    dut.io.dB_instruction_out.expect("b00000000010100000000001100110011".U)
+    println("Testing that decode has correctly read the instruction.")
+    println("Second instruction is: add t1, x0, t0.")
+    //
+    dut.io.dB_opcode.expect("b110011".U)
+    dut.io.dB_rs1.expect("b00000".U)
+    dut.io.dB_rs2.expect("b00101".U)
+    dut.io.dB_rd.expect("b00110".U)
+    dut.io.dB_f3.expect("b000".U)
+    dut.io.dB_f7.expect("b0000000".U)
+
+
+
+
 
     
 
@@ -173,12 +185,12 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       println("lbu")
       dut.io.funct3.poke("h_4".U)
       dut.io.LS_size.expect(1.U)
-      dut.io.loadReady.expect("b10".U)
+      dut.io.loadReady.expect("b01".U)
 
       println("lhu")
       dut.io.funct3.poke("h_5".U)
       dut.io.LS_size.expect(2.U)
-      dut.io.loadReady.expect("b10".U)
+      dut.io.loadReady.expect("b01".U)
 
       println("Load complete, testing stores")
       dut.io.opcode.poke("b0100011".U)

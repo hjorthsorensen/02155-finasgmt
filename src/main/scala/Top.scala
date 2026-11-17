@@ -11,6 +11,18 @@ class Top(fileProgram: String) extends Module {
     val done   = Output(Bool())
     val pc_in = Input(UInt(32.W))
     val pc_out = Output(UInt(32.W))
+
+
+    // -- Debug ports -- //
+    val dB_instruction_out = Output(UInt(32.W))
+    val dB_opcode = Output(UInt(7.W))
+    val dB_rs1 = Output(UInt(5.W))
+    val dB_rs2 = Output(UInt(5.W))
+    val dB_rd = Output(UInt(5.W))
+    val dB_f3 = Output(UInt(3.W))
+    val dB_f7 = Output(UInt(7.W))
+    
+    
   })
 
 
@@ -42,6 +54,15 @@ class Top(fileProgram: String) extends Module {
 // Immediate ------------------
 immediateModule.io.instruction := readModule.io.instruction_out
 
+
+// Debug --------------------
+io.dB_instruction_out := readModule.io.instruction_out
+io.dB_f3 := decodeModule.io.funct3
+io.dB_f7 := decodeModule.io.funct7
+io.dB_opcode :=decodeModule.io.opcode
+io.dB_rd := decodeModule.io.rd
+io.dB_rs1 := decodeModule.io.rs1
+io.dB_rs2  := decodeModule.io.rs2
   // from schoeberl with love
 
   // TODO: there should be an elegant way to express this

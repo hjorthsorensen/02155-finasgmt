@@ -32,6 +32,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       println("add")
       dut.io.funct7.poke("h_0".U)
       dut.io.data.expect("h_4321".U)
+      dut.io.writeEnable.expect(true.B)
 
       println("sub")
       dut.io.funct7.poke("h_20".U)

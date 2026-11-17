@@ -17,9 +17,6 @@ class Execute extends Module {
     val rs1_val = Input(UInt(32.W))
     val rs2_val = Input(UInt(32.W))
     val pc = Input(UInt(32.W))
-    val rs1_val = Input(UInt(32.W))
-    val rs2_val = Input(UInt(32.W))
-    val pc = Input(UInt(32.W))
 
     //OUTPUTS. Vel basically kun den nye PC eller opdaterede værdier i en af de 32 Registre.
     val pc_new = Output(UInt(32.W))
@@ -30,7 +27,6 @@ class Execute extends Module {
     val loadReady = Output(UInt(2.W))
     val saveReady = Output(Bool())
     val LS_size = Output(UInt(3.W))
-    val writeEnable = Output(Bool())
 
   })
     // VI kan vælge om vi har lyst til at videre inddele så at vi har en seperat ALU, BRANCH og eller MEMORY, eller vi bare har 1 fil med execute.

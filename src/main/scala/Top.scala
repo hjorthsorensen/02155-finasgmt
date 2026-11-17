@@ -9,12 +9,10 @@ class Top(fileProgram: String) extends Module {
     // -- Outputs -- //
     val regDeb = Output(Vec(4, UInt(32.W))) // debug output for the tester
     val done   = Output(Bool())
+    val pc_in = Input(UInt(32.W))
+    val pc_out = Output(UInt(32.W))
   })
 
-// -- Program Counter -- //
-  val pcModule = Module(new ProgramCounter)
-  val pc       = pcModule.io.pc
-  // ellers compiler lortet ikke
 
 // -- Decode -- //
   val decodeModule = Module(new Decode)
@@ -31,13 +29,15 @@ class Top(fileProgram: String) extends Module {
 // -- CONNECTIONS -- //
 
 // Pcmodule -------------------
-  pcModule.io.nextPC := DontCare
+  io.pc_in := DontCare
+  io.pc_out := io.pc_in
 
 // Decode ---------------------
   decodeModule.io.instruction := readModule.io.instruction_out
 
 // Read -----------------------
-  readModule.io.pc_in := pcModule.io.pc
+  readModule.io.pc_in := io.pc_out
+
 
 // Immediate ------------------
 immediateModule.io.instruction := readModule.io.instruction_out

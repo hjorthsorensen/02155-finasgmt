@@ -19,14 +19,27 @@ class SimpleTest extends AnyFlatSpec with ChiselScalatestTester {
   }
 }
 class TopTest extends AnyFlatSpec with ChiselScalatestTester {
-  "TopTest" should "pass values around" in test(new Top("src/test/test_add.bin")) { dut =>
-    println("Testing that first instruction got to Read.") 
-    //tjek at PC fra top -> read -> instruction out -> decode -> execute -> top -> forfra
-    dut.pcModule.io.pc.poke(0.U)
+  "TopTest" should "pass values around" in test(new Top("src/test/scala/test_add.bin")) { dut =>
+    // tjek at PC fra top -> read -> instruction out -> decode -> execute -> top -> forfra
+
+    println("Testing that pc can be set and changed, and that it changes instruction_out.")
+    dut.io.pc_in.poke(0.U)
+    dut.io.pc_out.expect(0.U)
+    println("Testing that first instruction got to Read.")
     dut.readModule.io.instruction_out.expect("b00000111110100000000001010010011".U)
+
+    dut.io.pc_in.poke(4.U)
+    dut.io.pc_out.expect(4.U)
+
+    println("Testing that second instruction got to Read.")
+    dut.readModule.io.instruction_out.expect("b00000000010100000000001100110011".U)
     
+
     
-    }
+
+  }
+}
+
 class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
   "ExecuteTest" should "pass" in {
     test(new Execute()) { dut =>
@@ -79,11 +92,11 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       println("and")
       dut.io.funct3.poke("h_7".U)
       dut.io.data.expect(0.U)
-      
+
       println("R-type complete, Testing I-type")
       dut.io.opcode.poke("b0010011".U)
       dut.io.imm.poke(5.U)
-      
+
       println("addi")
       dut.io.funct3.poke("h_0".U)
       dut.io.data.expect("h_26".U)
@@ -94,7 +107,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.data.expect("h_420".U)
 
       println("slti")
-      dut.io.imm.poke("h_FFFFFFF0".U) //-16
+      dut.io.imm.poke("h_FFFFFFF0".U) // -16
       dut.io.funct3.poke("h_2".U)
       dut.io.data.expect(0.U)
 
@@ -115,7 +128,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
 
       println("srai")
       dut.io.funct7.poke("h_20".U)
-      dut.io.data.expect("h_1".U) //positive so same as srli
+      dut.io.data.expect("h_1".U) // positive so same as srli
 
       println("ori")
       dut.io.funct3.poke("h_6".U)
@@ -125,7 +138,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.funct3.poke("h_7".U)
       dut.io.data.expect(1.U)
 
-      println("I-type complete, testing lui") //Check the imm goes through
+      println("I-type complete, testing lui") // Check the imm goes through
       dut.io.opcode.poke("b0110111".U)
       dut.io.imm.poke("h_87654321".U)
       dut.io.data.expect("h_87654321".U)
@@ -133,7 +146,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
 
       println("lui complete, testing auipc")
       dut.io.opcode.poke("b0010111".U)
-      dut.io.imm.poke(4.U) //Not true valid imm value, but just checks the calculation is correct.
+      dut.io.imm.poke(4.U)    // Not true valid imm value, but just checks the calculation is correct.
       dut.io.data.expect(8.U) // pc=4.u + imm=4.U. data=4.U + 4.U = 8.U
       dut.io.writeEnable.expect(true.B)
 
@@ -143,7 +156,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.funct3.poke("h_0".U)
       dut.io.rs1_val.poke("h_1000".U)
       dut.io.imm.poke(4.U)
-      dut.io.adress.expect("h_1002".U)
+      dut.io.adress.expect("h_1004".U)
       dut.io.LS_size.expect(1.U)
       dut.io.loadReady.expect("b11".U)
 
@@ -161,7 +174,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.funct3.poke("h_4".U)
       dut.io.LS_size.expect(1.U)
       dut.io.loadReady.expect("b10".U)
-      
+
       println("lhu")
       dut.io.funct3.poke("h_5".U)
       dut.io.LS_size.expect(2.U)
@@ -205,16 +218,10 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       println("bgeu")
       dut.io.funct3.poke("h_7".U)
 
-
-
-
-}
-}
+    }
+  }
 }
 
-
-
-}
 class MemTest extends AnyFlatSpec with ChiselScalatestTester {
   "memTest" should "pass" in test(new MemReadLoad()) { dut =>
     println("unsigned test")

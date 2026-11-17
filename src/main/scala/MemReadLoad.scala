@@ -13,7 +13,7 @@ class MemReadLoad() extends Module {
     val wordOut   = Output(UInt(32.W))
   })
   
-  val memory = RegInit(VecInit(Seq.fill(1024)(0.U(8.W)))) // 1 kb of dynamic ram:)
+  val memory = Mem((1024),UInt(8.W)) // 1 kb of dynamic ram:)
     io.wordOut := 1.U
   switch(io.size) {
     is(0.U){

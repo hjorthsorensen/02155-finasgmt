@@ -18,6 +18,10 @@ class Execute extends Module {
     //OUTPUTS. Vel basically kun den nye PC eller opdaterede værdier i en af de 32 Registre.
     val pc_new = Output(UInt(32.W))
     val data = Output(UInt(32.W)) //Bare kaldt data for nu, Vi kan lige ændre senere
+    val adress = Output(UInt(32.W))
+    val loadReady = Output(UInt(2.W))
+    val saveReady = Output(Bool())
+    val LS_size = Output(UInt(2.W))
   })
     // VI kan vælge om vi har lyst til at videre inddele så at vi har en seperat ALU, BRANCH og eller MEMORY, eller vi bare har 1 fil med execute.
 
@@ -29,10 +33,10 @@ class Execute extends Module {
   sub := io.rs1_val - io.rs2_val
   
   val sll = Wire(UInt(32.W))
-  sll := io.rs1_val << (io.rs2_val & 0x1F)
+  sll := io.rs1_val << (io.rs2_val & "h_1F".U)
   
   val slt = Wire(UInt(32.W))
-  when(io.rs1_val < io.rs2_val.asSInt){
+  when(io.rs1_val.asSInt < io.rs2_val.asSInt){
     slt := 1.U
   }.otherwise{
     slt := 0.U
@@ -46,13 +50,13 @@ class Execute extends Module {
   }
   
   val xor = Wire(UInt(32.W))
-  xor := rs1_val ^ rs2_val
+  xor := io.rs1_val ^ io.rs2_val
   
   val sra = Wire(UInt(32.W))
   //Do later
   
   val srl = Wire(UInt(32.W))
-  srl := io.rs1_val >> (io.rs2_val & 0x1F)
+  srl := io.rs1_val >> (io.rs2_val & "h_1F".U)
   
   val or = Wire(UInt(32.W))
   or := io.rs1_val | io.rs2_val
@@ -61,7 +65,7 @@ class Execute extends Module {
   and := io.rs1_val & io.rs2_val
 
   // I-Type
-  val shamt := io.imm & 0x1F
+  val shamt = io.imm & "h_1F".U
 
   val addi = Wire(UInt(32.W))
   addi := io.rs1_val + io.imm
@@ -70,7 +74,7 @@ class Execute extends Module {
   slli := io.rs1_val << shamt
   
   val slti = Wire(UInt(32.W))
-  when(io.rs1_val.asSInt < io.imm){
+  when(io.rs1_val.asSInt < io.imm.asSInt){
     slti := 1.U
   }.otherwise{
     slti := 0.U
@@ -101,7 +105,7 @@ class Execute extends Module {
   //ECALL/EBREAK
 
   //Loads
-  val adress := io.rs1_val + io.imm
+  val adress = (io.rs1_val + io.imm)
   val lb = Wire(UInt(32.W))
   val lh = Wire(UInt(32.W))
   val lw = Wire(UInt(32.W))
@@ -111,12 +115,12 @@ class Execute extends Module {
   //JALR
   val jalr = Wire(UInt(32.W))
   jalr := io.pc + 4.U//To save
-  val newPC_jalr := (io.rs1_val + io.imm) & (~0x1)
+  val newPC_jalr = (io.rs1_val + io.imm) & ~("h_1F".U)
   
   //JAL
   val jal = Wire(UInt(32.W))
   jal := io.pc + 4.U //to be saved
-  val newPC_jal := io.pc + io.imm
+  val newPC_jal = io.pc + io.imm
 
 
   //Stores
@@ -140,14 +144,14 @@ class Execute extends Module {
   }
   
   val blt = Wire(UInt(32.W))
-  when(io.rs1_val.asSint < io.rs2_val.asSInt){
+  when(io.rs1_val.asSInt < io.rs2_val.asSInt){
     blt := io.pc + io.imm
   }.otherwise{
     blt := io.pc + 4.U
   }
   
   val bge = Wire(UInt(32.W))
-  when(io.rs1_val.asSint >= io.rs2_val.asSInt){
+  when(io.rs1_val.asSInt >= io.rs2_val.asSInt){
     bge := io.pc + io.imm
   }.otherwise{
     bge := io.pc + 4.U
@@ -239,8 +243,8 @@ class Execute extends Module {
         is("h_2".U){//slti
           io.data := slti
         }
-        is("h_3".U){//sltui
-          io.data := sltui
+        is("h_3".U){//sltiu
+          io.data := sltiu
         }
         is("h_4".U){//xori
           io.data := xori
@@ -301,7 +305,7 @@ class Execute extends Module {
     is("b0100011".U) { // Stores (sb, sh, sw)
       switch(io.funct3){
         is("h_0".U){//sb
-          d
+          
         }
       }
     }

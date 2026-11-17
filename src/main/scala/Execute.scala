@@ -35,7 +35,7 @@ class Execute extends Module {
   sub := io.rs1_val - io.rs2_val
   
   val sll = Wire(UInt(32.W))
-  sll := io.rs1_val << (io.rs2_val & "h_1F".U)
+  sll := io.rs1_val << io.rs2_val(4, 0)
   
   val slt = Wire(UInt(32.W))
   when(io.rs1_val.asSInt < io.rs2_val.asSInt){
@@ -55,10 +55,10 @@ class Execute extends Module {
   xor := io.rs1_val ^ io.rs2_val
   
   val sra = Wire(UInt(32.W))
-  //Do later
+  sra := (io.rs1_val.asSInt >> io.rs2_val(4, 0)).asUInt
   
   val srl = Wire(UInt(32.W))
-  srl := io.rs1_val >> (io.rs2_val & "h_1F".U)
+  srl := io.rs1_val >> io.rs2_val(4, 0)
   
   val or = Wire(UInt(32.W))
   or := io.rs1_val | io.rs2_val
@@ -67,7 +67,8 @@ class Execute extends Module {
   and := io.rs1_val & io.rs2_val
 
   // I-Type
-  val shamt = io.imm & "h_1F".U
+  val shamt = Wire(UInt(5.W))
+  shamt := io.imm(4, 0)
 
   val addi = Wire(UInt(32.W))
   addi := io.rs1_val + io.imm
@@ -96,7 +97,7 @@ class Execute extends Module {
   srli := io.rs1_val >> shamt
   
   val srai = Wire(UInt(32.W))
-  // Do this later like SRA
+  srai := (io.rs1_val.asSInt >> shamt).asUInt
   
   val ori = Wire(UInt(32.W))
   ori := io.rs1_val | io.imm
@@ -108,16 +109,16 @@ class Execute extends Module {
 
   //Loads
   val adress = (io.rs1_val + io.imm)
-  val lb = Wire(UInt(32.W))
-  val lh = Wire(UInt(32.W))
-  val lw = Wire(UInt(32.W))
-  val lbu = Wire(UInt(32.W))
-  val lhu = Wire(UInt(32.W))
+  // val lb = Wire(UInt(32.W))
+  // val lh = Wire(UInt(32.W))
+  // val lw = Wire(UInt(32.W))
+  // val lbu = Wire(UInt(32.W))
+  // val lhu = Wire(UInt(32.W))
 
   //JALR
   val jalr = Wire(UInt(32.W))
   jalr := io.pc + 4.U//To save
-  val newPC_jalr = (io.rs1_val + io.imm) & ~("h_1F".U)
+  val newPC_jalr = (io.rs1_val + io.imm) & "h_FFFFFFFE".U
   
   //JAL
   val jal = Wire(UInt(32.W))
@@ -126,9 +127,9 @@ class Execute extends Module {
 
 
   //Stores
-  val sb = Wire(UInt(32.W))
-  val sh = Wire(UInt(32.W))
-  val sw = Wire(UInt(32.W))
+  // val sb = Wire(UInt(32.W))
+  // val sh = Wire(UInt(32.W))
+  // val sw = Wire(UInt(32.W))
 
   //B-Type
   val beq = Wire(UInt(32.W))
@@ -168,18 +169,18 @@ class Execute extends Module {
   
   val bgeu = Wire(UInt(32.W))
   when(io.rs1_val >= io.rs2_val){
-    bltu := io.pc + io.imm
+    bgeu := io.pc + io.imm
   }.otherwise{
-    bltu := io.pc + 4.U
+    bgeu := io.pc + 4.U
   }
 
     //LUI - U-Type
   val lui = Wire(UInt(32.W))
-  lui := io.pc
+  lui := io.imm
 
   // auipc - U-Type
   val auipc = Wire(UInt(32.W))
-  auipc := io.rs1_val + io.imm
+  auipc := io.pc + io.imm
 
   //Default output assignments
   io.pc_new := io.pc + 4.U
@@ -188,7 +189,7 @@ class Execute extends Module {
   //IO for Save/Load
   io.adress := adress
   io.loadReady := 0.U
-  io.saveReady := 0.U
+  io.saveReady := false.B
   io.LS_size := 0.U
 
 
@@ -220,11 +221,11 @@ class Execute extends Module {
         }
         is("h_5".U){//
           switch(io.funct7){
-            is("h_0".U){//sra
-              io.data := sra
-            }
-            is("h_20".U){//srl
+            is("h_0".U){//srl
               io.data := srl
+            }
+            is("h_20".U){//sra
+              io.data := sra
             }
           }
         }
@@ -287,24 +288,24 @@ class Execute extends Module {
       
       switch(io.funct3){
         is("h_0".U){//lb
-          io.loadReady := "11".U
+          io.loadReady := "b11".U
           io.LS_size := 1.U
         }
         is("h_1".U){//lh
-          io.loadReady := "11".U
+          io.loadReady := "b11".U
           io.LS_size := 2.U
           
         }
         is("h_2".U){//lw
-          io.loadReady := "11".U
+          io.loadReady := "b11".U
           io.LS_size := 4.U
         }
         is("h_4".U){//lbu
-          io.loadReady := "01".U
+          io.loadReady := "b01".U
           io.LS_size := 1.U
         }
         is("h_5".U){//lhu
-          io.loadReady := "01".U
+          io.loadReady := "b01".U
           io.LS_size := 2.U
         }
       }

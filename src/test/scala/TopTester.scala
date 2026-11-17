@@ -18,6 +18,62 @@ for (i <- 0 until dut.memoryBytes.length/4 ){ //please dont make program with od
 }
 }
 }
+class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
+  "ExecuteTest" should "pass" in {
+    test(new Execute()) { dut =>
+      println("Execute test R-type")
+      dut.io.opcode.poke("b0110011".U)
+      dut.io.pc.poke(4.U)
+      dut.io.rs1_val.poke("h_21".U)
+      dut.io.rs2_val.poke("h_4300".U)
+      dut.io.imm.poke(0.U)
+      dut.io.funct3.poke("h_0".U)
+
+      println("add")
+      dut.io.funct7.poke("h_0".U)
+      dut.io.data.expect("h_4321".U)
+
+      println("sub")
+      dut.io.funct7.poke("h_20".U)
+      dut.io.data.expect("h_FFFFBD21".U)
+
+      println("sll")
+      dut.io.funct3.poke("h_1".U)
+      dut.io.data.expect("h_21".U)
+
+      println("slt")
+      dut.io.funct3.poke("h_2".U)
+      dut.io.data.expect(1.U)
+
+      println("sltu")
+      dut.io.funct3.poke("h_3".U)
+      dut.io.data.expect(1.U)
+
+      println("xor")
+      dut.io.funct3.poke("h_4".U)
+      dut.io.data.expect("h_4321".U)
+
+      println("srl")
+      dut.io.funct3.poke("h_5".U)
+      dut.io.funct7.poke("h_0".U)
+      dut.io.data.expect("h_21".U)
+
+      println("sra")
+      dut.io.funct7.poke("h_20".U)
+      dut.io.data.expect("h_21".U)
+
+      println("or")
+      dut.io.funct3.poke("h_6".U)
+      dut.io.data.expect("h_4321".U)
+
+      println("and")
+      dut.io.funct3.poke("h_7".U)
+      dut.io.data.expect(0.U)
+}
+}
+}
+
+
 
 class MemTest extends AnyFlatSpec with ChiselScalatestTester{
   "memTest" should "pass" in {test(new MemReadLoad() ) { dut =>

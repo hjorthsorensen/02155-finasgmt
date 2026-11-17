@@ -12,3 +12,5 @@ scalacOptions ++= Seq(
   "-feature",                   // show which line triggers feature warnings
   "-language:reflectiveCalls"   // allow the IO(new Bundle { ... }) pattern without warnings
 )
+Test / parallelExecution := false
+Test / logBuffered := false

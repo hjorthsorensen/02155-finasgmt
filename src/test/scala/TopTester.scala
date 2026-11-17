@@ -10,9 +10,12 @@ class dataDump extends AnyFlatSpec with ChiselScalatestTester{
     dut.clock.step(7) //we get to after ecall is done:)
 
     for (i <- 0 until 32){
-      println("data at "+i+"reg is: "+dut.io.dB_regs(i).peek().litValue.toInt+",hex:"+dut.io.dB_regs(i).peek().litValue.toString(16)+" binary: "+dut.io.dB_regs(i).peekInt().toString(2).reverse.padTo(32,'0').reverse +" .")
+      println("data at "+i+" is...")
+      println("as SInt: "+dut.io.dB_regs(i).peek().litValue.toInt)
+      println("hex:     "+dut.io.dB_regs(i).peek().litValue.toString(16))
+      println("binary:  "+dut.io.dB_regs(i).peekInt().toString(2).reverse.padTo(32,'0').reverse +" .")
     }
-
+    println("done! :)")
     }
 }
 

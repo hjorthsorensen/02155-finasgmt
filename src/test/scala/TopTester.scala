@@ -3,6 +3,19 @@ import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
+
+
+class dataDump extends AnyFlatSpec with ChiselScalatestTester{
+  "datadump" should "print all registers.... :)" in test(new Top("src/test/scala/test_add.bin")) {dut =>
+    dut.clock.step(100) //we get to after ecall is done:)
+
+    for (i <- 0 until 32){
+      println("data at "+i+"reg is: "+dut.io.dB_regs(i).peekInt().toString(2)+" .")
+    }
+
+    }
+}
+
 class SimpleTest extends AnyFlatSpec with ChiselScalatestTester {
   "DUT" should "pass" in test(new Read("src/test/scala/test_add.bin")) { dut =>
     dut.io.pc_in.poke(0.U)

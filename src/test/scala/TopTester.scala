@@ -7,7 +7,7 @@ import org.scalatest.matchers.should.Matchers
 
 class dataDump extends AnyFlatSpec with ChiselScalatestTester{
   "datadump" should "print all registers.... :)" in test(new Top("src/test/scala/test_add.bin")) {dut =>
-    dut.clock.step(7) //we get to after ecall is done:)
+    dut.clock.step(20) //we get to after ecall is done:)
 
     for (i <- 0 until 32){
       println("data at "+i+" is...")

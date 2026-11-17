@@ -53,8 +53,12 @@ val pc = RegInit(0.U(32.W))
       // -- CONNECTIONS -- //
 
 // Pcmodule -------------------
-pc := executeModule.io.pc_new
-
+io.done := false.B
+when(!decodeModule.io.isEcall && regs(28.U) =/= 10.U){
+  pc := executeModule.io.pc_new
+}.otherwise{
+  io.done := true.B
+}
 io.pc_out := pc
 
 // Read -----------------------

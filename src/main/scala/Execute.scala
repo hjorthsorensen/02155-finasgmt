@@ -7,7 +7,7 @@ class Execute extends Module {
     val opcode = Input(UInt(7.W))
     // val rs1 = Input(UInt(5.W))
     // val rs2 = Input(UInt(5.W))
-    // val rd = Input(UInt(5.W))
+     val rd = Input(UInt(5.W)) //uncommented fordi vi skal vel bruge den?
     // val rs1 = Input(UInt(5.W))
     // val rs2 = Input(UInt(5.W))
     // val rd = Input(UInt(5.W))

@@ -36,8 +36,6 @@ class Top(fileProgram: String) extends Module {
 // -- Read -- //
   val readModule = Module(new Read(fileProgram))
 
-// -- Immediate -- //
-  val immediateModule = Module(new Immediate)
 
 // -- Execute -- //
   val executeModule = Module(new Execute())
@@ -73,8 +71,6 @@ executeModule.io.pc := io.pc_out
 
 
 
-// Immediate ------------------
-immediateModule.io.instruction := readModule.io.instruction_out
 
 
 // Debug --------------------

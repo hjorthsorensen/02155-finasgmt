@@ -24,18 +24,19 @@ class TopTest extends AnyFlatSpec with ChiselScalatestTester {
 
     println("Testing that pc can be set and changed, and that it changes instruction_out.")
     dut.io.pc_in.poke(0.U)
+    dut.clock.step(1)
     dut.io.pc_out.expect(0.U)
     println("Testing that first instruction got to Read.")
     dut.io.dB_instruction_out.expect("b00000111110100000000001010010011".U)
 
     dut.io.pc_in.poke(4.U)
+    dut.clock.step(1)
     dut.io.pc_out.expect(4.U)
 
     println("Testing that second instruction got to Read.")
     dut.io.dB_instruction_out.expect("b00000000010100000000001100110011".U)
     println("Testing that decode has correctly read the instruction.")
     println("Second instruction is: add t1, x0, t0.")
-    //
     dut.io.dB_opcode.expect("b110011".U)
     dut.io.dB_rs1.expect("b00000".U)
     dut.io.dB_rs2.expect("b00101".U)
@@ -168,7 +169,7 @@ class ExecuteTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.funct3.poke("h_0".U)
       dut.io.rs1_val.poke("h_1000".U)
       dut.io.imm.poke(4.U)
-      dut.io.adress.expect("h_1004".U)
+      dut.io.address.expect("h_1004".U)
       dut.io.LS_size.expect(1.U)
       dut.io.loadReady.expect("b11".U)
 

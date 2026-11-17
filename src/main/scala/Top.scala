@@ -40,17 +40,21 @@ class Top(fileProgram: String) extends Module {
 // -- Execute -- //
   val executeModule = Module(new Execute())
 
+// -- Memory -- //
+val memoryModule = Module(new MemReadLoad())
 
-// -- CPU registers -- //
+        // -- Regs and Wires in top -- //
+//not modules, but has to be created:)//
 val regs = RegInit(VecInit(Seq.fill(32)(0.U(32.W))))
-//not a module, but has to be created:)
+val pc = RegInit(0.U(32.W))
 
 
       // -- CONNECTIONS -- //
 
 // Pcmodule -------------------
-  io.pc_in := executeModule.io.pc_new
-  io.pc_out := io.pc_in
+pc := executeModule.io.pc_new
+
+io.pc_out := pc
 
 // Read -----------------------
   readModule.io.pc_in := io.pc_out
@@ -68,6 +72,13 @@ executeModule.io.rs1_val := decodeModule.io.rs1
 executeModule.io.rs2_val := decodeModule.io.rs2
 executeModule.io.rd := decodeModule.io.rd
 executeModule.io.pc := io.pc_out
+
+// MemReadLoad ------------
+memoryModule.io.loadReady := executeModule.io.loadReady
+memoryModule.io.saveReady := executeModule.io.saveReady
+memoryModule.io.size := executeModule.io.LS_size
+memoryModule.io.address := executeModule.io.address
+memoryModule.io.wordIn := executeModule.io.data
 
 
 

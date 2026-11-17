@@ -23,7 +23,7 @@ class Execute extends Module {
     val data = Output(UInt(32.W)) //Bare kaldt data for nu, Vi kan lige ændre senere
     val writeEnable = Output(Bool())
 
-    val adress = Output(UInt(32.W))
+    val address = Output(UInt(32.W))
     val loadReady = Output(UInt(2.W))
     val saveReady = Output(Bool())
     val LS_size = Output(UInt(3.W))
@@ -112,7 +112,7 @@ class Execute extends Module {
   //ECALL/EBREAK
 
   //Loads
-  val adress = (io.rs1_val + io.imm)
+  val address = (io.rs1_val + io.imm)
   // val lb = Wire(UInt(32.W))
   // val lh = Wire(UInt(32.W))
   // val lw = Wire(UInt(32.W))
@@ -191,7 +191,7 @@ class Execute extends Module {
   io.data := 0.U
   io.writeEnable := false.B
   //IO for Save/Load
-  io.adress := adress
+  io.address := address
   io.loadReady := 0.U
   io.saveReady := false.B
   io.LS_size := 0.U

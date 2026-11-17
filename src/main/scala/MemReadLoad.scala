@@ -13,7 +13,7 @@ class MemReadLoad() extends Module {
   })
 
   val memory = VecInit(Seq.fill(1024)(0.U(8.W))) // 1 kb of dynamic ram:)
-    io.wordOut := 0.U
+  io.wordOut := 0.U
   switch(io.size) {
     is(1.U) {
       when(io.loadReady === 1.U) {

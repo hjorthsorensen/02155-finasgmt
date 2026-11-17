@@ -4,13 +4,13 @@ import chisel3.util._
 class Execute extends Module {
   val io = IO(new Bundle {
     //Inputs så den kender instruktionen
-    val opcode = Input(UInt(7.W))
     // val rs1 = Input(UInt(5.W))
     // val rs2 = Input(UInt(5.W))
-     val rd = Input(UInt(5.W)) //uncommented fordi vi skal vel bruge den?
     // val rs1 = Input(UInt(5.W))
     // val rs2 = Input(UInt(5.W))
     // val rd = Input(UInt(5.W))
+    val opcode = Input(UInt(7.W))
+    val rd = Input(UInt(5.W)) //uncommented fordi vi skal vel bruge den?
     val funct3 = Input(UInt(3.W))
     val funct7 = Input(UInt(7.W))
     val imm = Input(UInt(32.W))

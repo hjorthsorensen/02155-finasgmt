@@ -51,7 +51,7 @@ val regs = RegInit(VecInit(Seq.fill(32)(0.U(32.W))))
       // -- CONNECTIONS -- //
 
 // Pcmodule -------------------
-  io.pc_in := DontCare
+  io.pc_in := executeModule.io.pc_new
   io.pc_out := io.pc_in
 
 // Read -----------------------

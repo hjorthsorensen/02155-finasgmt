@@ -68,10 +68,11 @@ executeModule.io.opcode := decodeModule.io.opcode
 executeModule.io.funct3 := decodeModule.io.funct3
 executeModule.io.funct7 := decodeModule.io.funct7
 executeModule.io.imm := decodeModule.io.imm
-executeModule.io.rs1_val := decodeModule.io.rs1
-executeModule.io.rs2_val := decodeModule.io.rs2
-executeModule.io.rd := decodeModule.io.rd
+executeModule.io.rs1_val := decodeModule.io.rs1//to be fixed
+executeModule.io.rs2_val := decodeModule.io.rs2//to be fixed
+executeModule.io.rd := decodeModule.io.rd // ikke behov for, vi ændrer registers værdi i top ikke i execute
 executeModule.io.pc := io.pc_out
+
 
 // MemReadLoad ------------
 memoryModule.io.loadReady := executeModule.io.loadReady

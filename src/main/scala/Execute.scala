@@ -18,10 +18,12 @@ class Execute extends Module {
     //OUTPUTS. Vel basically kun den nye PC eller opdaterede værdier i en af de 32 Registre.
     val pc_new = Output(UInt(32.W))
     val data = Output(UInt(32.W)) //Bare kaldt data for nu, Vi kan lige ændre senere
+    val writeEnable = Output(Bool())
+
     val adress = Output(UInt(32.W))
     val loadReady = Output(UInt(2.W))
     val saveReady = Output(Bool())
-    val LS_size = Output(UInt(2.W))
+    val LS_size = Output(UInt(3.W))
   })
     // VI kan vælge om vi har lyst til at videre inddele så at vi har en seperat ALU, BRANCH og eller MEMORY, eller vi bare har 1 fil med execute.
 
@@ -182,6 +184,7 @@ class Execute extends Module {
   //Default output assignments
   io.pc_new := io.pc + 4.U
   io.data := 0.U
+  io.writeEnable := false.B
   //IO for Save/Load
   io.adress := adress
   io.loadReady := 0.U
@@ -191,6 +194,7 @@ class Execute extends Module {
 
     switch (io.opcode){
     is("b0110011".U) { //R-type (add, sub, sll, srl, sra, slt, sltu, and, or, xor)
+      io.writeEnable := true.B//Will always write when R-type is given, may cause a wrong funct3/funct7 to write 0.U to a register
       switch(io.funct3){
         is("h_0".U){
           switch(io.funct7){
@@ -233,6 +237,7 @@ class Execute extends Module {
       }
     }
     is("b0010011".U) { // I-type (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
+      io.writeEnable := true.B//Will always write when I-type is given, may cause a wrong funct3/funct7 to write 0.U to a register
       switch(io.funct3){
         is("h_0".U){//addi
           io.data := addi
@@ -269,9 +274,11 @@ class Execute extends Module {
 
     }
     is("b0110111".U) { // LUI
+      io.writeEnable := true.B//Will always write when Lui is given
       io.data := lui
     }
     is("b0010111".U) { // auipc 
+      io.writeEnable := true.B//Will always write when auipc is given
       io.data := auipc
     }
     is("b1110011".U) { // ecall - Empty for now, need to execute syscall
@@ -281,16 +288,16 @@ class Execute extends Module {
       switch(io.funct3){
         is("h_0".U){//lb
           io.loadReady := "11".U
-          io.LS_size := 0.U
+          io.LS_size := 1.U
         }
         is("h_1".U){//lh
           io.loadReady := "11".U
-          io.LS_size := 1.U
+          io.LS_size := 2.U
           
         }
         is("h_2".U){//lw
           io.loadReady := "11".U
-          io.LS_size := 2.U
+          io.LS_size := 4.U
         }
         is("h_4".U){//lbu
           io.loadReady := "01".U
@@ -298,14 +305,23 @@ class Execute extends Module {
         }
         is("h_5".U){//lhu
           io.loadReady := "01".U
-          io.LS_size := 0.U
+          io.LS_size := 2.U
         }
       }
     }
     is("b0100011".U) { // Stores (sb, sh, sw)
       switch(io.funct3){
         is("h_0".U){//sb
-          
+          io.LS_size := 1.U
+          io.saveReady := true.B
+        }
+        is("h_1".U){//sh
+          io.LS_size := 2.U
+          io.saveReady := true.B
+        }
+        is("h_2".U){//sw
+          io.LS_size := 4.U
+          io.saveReady := true.B
         }
       }
     }

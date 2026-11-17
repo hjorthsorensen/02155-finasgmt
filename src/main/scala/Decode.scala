@@ -13,7 +13,7 @@ class Decode extends Module {
     val rd     = Output(UInt(5.W)) // destination register
     val funct3 = Output(UInt(3.W))
     val funct7 = Output(UInt(7.W))
-    val imm = Output(UInt(32.W))
+    val imm    = Output(UInt(32.W))
 
     // -- Decode Controls -- //
     val regWrite = Output(Bool())    // Write to register file or not
@@ -50,6 +50,7 @@ class Decode extends Module {
   io.branch   := false.B
   io.jump     := false.B
   io.jalr     := false.B
+  io.imm      := 0.U // default value
 
   // -- Switch statement to decode instruction based on opcode -- //
   switch(io.opcode) {
@@ -68,6 +69,7 @@ class Decode extends Module {
       // funct7(5) selects srai over srli. for all other I-type operations, it is an immediate bit, so alt = 0
       io.aluOp    := Cat(alt, io.funct3)
       io.memToReg := 0.U // write ALU result to rd
+      io.imm      := io.instruction(31, 20).asSInt.pad(32).asUInt
     }
     is("b0110111".U) { // LUI (0 + imm)
       io.regWrite := true.B
@@ -75,6 +77,7 @@ class Decode extends Module {
       io.aluSrcB  := true.B // need immediate
       io.aluOp    := 0.U    // add
       io.memToReg := 0.U    // write ALU result to rd
+      io.imm      := Cat(io.instruction(31, 12), 0.U(12.W))
     }
     is("b0010111".U) { // auipc (pc + imm)
       io.regWrite := true.B
@@ -82,6 +85,7 @@ class Decode extends Module {
       io.aluSrcB  := true.B // need immediate
       io.aluOp    := 0.U    // add
       io.memToReg := 0.U    // write ALU result to rd
+      io.imm      := Cat(io.instruction(31, 12), 0.U(12.W))
     }
     is("b1110011".U) { // ecall
       io.isEcall := true.B
@@ -93,6 +97,7 @@ class Decode extends Module {
       io.aluOp    := 0.U    // add -> address
       io.memRead  := true.B
       io.memToReg := 1.U    // write memory data to rd
+      io.imm      := io.instruction(31, 20).asSInt.pad(32).asUInt
     }
     is("b0100011".U) { // Stores (sb, sh, sw): mem[rs1 + imm] = rs2
       io.aluSrcA  := 0.U    // rs1
@@ -100,17 +105,23 @@ class Decode extends Module {
       io.aluOp    := 0.U    // add -> address
       io.memWrite := true.B
       // regWrite stays false: stores don't write a register
+      io.imm := Cat(io.instruction(31, 25), io.instruction(11, 7)).asSInt.pad(32).asUInt
     }
     is("b1100011".U) { // Branches (beq, bne, blt, bge, bltu, bgeu)
       io.aluSrcA := 0.U     // rs1
       io.aluSrcB := false.B // rs2
       io.branch  := true.B
       // compare (selected by funct3) is done in Execute; target = PC + imm
+      io.imm := Cat(io.instruction(31), io.instruction(7), io.instruction(30, 25), io.instruction(11, 8), 0.U(1.W))
+        .asSInt.pad(32).asUInt
     }
     is("b1101111".U) { // JAL: rd = PC + 4, PC = PC + imm
       io.regWrite := true.B
       io.memToReg := 2.U // write PC + 4 to rd
       io.jump     := true.B
+      io.imm := Cat(io.instruction(31), io.instruction(19, 12), io.instruction(20), io.instruction(30, 21), 0.U(1.W))
+        .asSInt.pad(32).asUInt
+
     }
     is("b1100111".U) { // JALR: rd = PC + 4, PC = (rs1 + imm) & ~1
       io.regWrite := true.B
@@ -119,40 +130,7 @@ class Decode extends Module {
       io.aluOp    := 0.U    // add -> jump target
       io.memToReg := 2.U    // write PC + 4 to rd
       io.jalr     := true.B
-    }
-  }
-
-  //imm switch
-
-  val opcode = io.instruction(6, 0) // Opcode decides the instruction type
-  io.imm := 0.U // default value
-
-  switch(opcode) {
-    is("b0010011".U) { // I-type (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
-      io.imm := io.instruction(31, 20).asSInt.pad(32).asUInt
-    }
-    is("b0000011".U) { // Loads (lb, lh, lw, lbu, lhu) - I-type
-      io.imm := io.instruction(31, 20).asSInt.pad(32).asUInt
-    }
-    is("b0100011".U) { // Stores (sb, sh, sw - S-type)
-      io.imm := Cat(io.instruction(31, 25), io.instruction(11, 7)).asSInt.pad(32).asUInt
-    }
-    is("b0110111".U) { // LUI (0 + imm) - U-type
-      io.imm := Cat(io.instruction(31, 12), 0.U(12.W))
-    }
-    is("b0010111".U) { // AUIPC (pc + imm) - U-type
-      io.imm := Cat(io.instruction(31, 12), 0.U(12.W))
-    }
-    is("b1100011".U) { // Branches (beq, bne, blt, bge, bltu, bgeu) - B-type
-      io.imm := Cat(io.instruction(31), io.instruction(7), io.instruction(30, 25), io.instruction(11, 8), 0.U(1.W))
-        .asSInt.pad(32).asUInt
-    }
-    is("b1101111".U) { // JAL - J-type
-      io.imm := Cat(io.instruction(31), io.instruction(19, 12), io.instruction(20), io.instruction(30, 21), 0.U(1.W))
-        .asSInt.pad(32).asUInt
-    }
-    is("b1100111".U) { // JALR - I-type
-      io.imm := io.instruction(31, 20).asSInt.pad(32).asUInt
+      io.imm      := io.instruction(31, 20).asSInt.pad(32).asUInt
     }
   }
 }

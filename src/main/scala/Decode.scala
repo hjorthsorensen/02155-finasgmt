@@ -11,8 +11,8 @@ class Decode extends Module {
     val rs1    = Output(UInt(5.W)) // source register 1
     val rs2    = Output(UInt(5.W)) // source register 2
     val rd     = Output(UInt(5.W)) // destination register
-    val funct3 = Output(UInt(3.W))
-    val funct7 = Output(UInt(7.W))
+    val funct3 = Output(UInt(3.W)) 
+    val funct7 = Output(UInt(7.W)) 
     val imm    = Output(UInt(32.W))
 
     // -- Decode Controls -- //
@@ -21,12 +21,15 @@ class Decode extends Module {
     val aluSrcB  = Output(Bool())    // 0 = rs2, 1 = immediate
     val aluOp    = Output(UInt(4.W)) // funct7(5), funct3: 0=add 8=sub 1=sll 2=slt 3=sltu 4=xor 5=srl 13=sra 6=or 7=and
     val isEcall  = Output(Bool())    // Is the instruction an ecall
-    val memRead  = Output(Bool())    // Read from data memory (loads)
+    val memRead  = Output(UInt(2.W)) // Read from data memory (loads) 2Wide to do Unsigned loads.
     val memWrite = Output(Bool())    // Write to data memory (stores)
-    val memToReg = Output(UInt(2.W)) // Value written to rd: 0 = ALU result, 1 = memory, 2 = PC+4
+    val memToReg = Output(UInt(2.W)) // Value written to rd: 0 = ALU result, 1 = memory, 2 = PC+4 - Hvad er meningen her?
     val branch   = Output(Bool())    // Conditional branch (beq, bne, blt, bge, bltu, bgeu)
-    val jump     = Output(Bool())    // jal
+    val jal     = Output(Bool())    // jal
     val jalr     = Output(Bool())    // jalr
+    val lui = Output(Bool())
+    val auipc = Output(Bool())
+    val lsSize = Output(UInt(2.W)) // What size to load/save in memory
   })
 
   // -- Decode the instruction -- //
@@ -44,13 +47,16 @@ class Decode extends Module {
   io.aluSrcB  := false.B
   io.aluOp    := 0.U // add instruction per default
   io.isEcall  := false.B
-  io.memRead  := false.B
+  io.memRead  := "b00".U
   io.memWrite := false.B
   io.memToReg := 0.U
   io.branch   := false.B
-  io.jump     := false.B
+  io.jal    := false.B
   io.jalr     := false.B
   io.imm      := 0.U // default value
+  io.lui := false.B
+  io.auipc := false.B
+  io.lsSize := 0.U
 
   // -- Switch statement to decode instruction based on opcode -- //
   switch(io.opcode) {
@@ -78,6 +84,7 @@ class Decode extends Module {
       io.aluOp    := 0.U    // add
       io.memToReg := 0.U    // write ALU result to rd
       io.imm      := Cat(io.instruction(31, 12), 0.U(12.W))
+      io.lui := true.B
     }
     is("b0010111".U) { // auipc (pc + imm)
       io.regWrite := true.B
@@ -86,6 +93,7 @@ class Decode extends Module {
       io.aluOp    := 0.U    // add
       io.memToReg := 0.U    // write ALU result to rd
       io.imm      := Cat(io.instruction(31, 12), 0.U(12.W))
+      io.auipc := true.B
     }
     is("b1110011".U) { // ecall
       io.isEcall := true.B
@@ -95,9 +103,22 @@ class Decode extends Module {
       io.aluSrcA  := 0.U    // rs1
       io.aluSrcB  := true.B // immediate
       io.aluOp    := 0.U    // add -> address
-      io.memRead  := true.B
+      io.memRead := MuxLookup(io.funct3,0.U)(Seq(
+        0.U -> "b11".U, 
+        1.U -> "b11".U,
+        2.U -> "b11".U,
+        4.U -> "b10".U,
+        5.U -> "b10".U
+      ))
       io.memToReg := 1.U    // write memory data to rd
       io.imm      := io.instruction(31, 20).asSInt.pad(32).asUInt
+      io.lsSize := MuxLookup(io.funct3, 0.U)(Seq(
+        0.U -> 1.U, 
+        1.U -> 2.U,
+        2.U -> 4.U,
+        4.U -> 1.U,
+        5.U -> 2.U
+      ))
     }
     is("b0100011".U) { // Stores (sb, sh, sw): mem[rs1 + imm] = rs2
       io.aluSrcA  := 0.U    // rs1
@@ -106,6 +127,11 @@ class Decode extends Module {
       io.memWrite := true.B
       // regWrite stays false: stores don't write a register
       io.imm := Cat(io.instruction(31, 25), io.instruction(11, 7)).asSInt.pad(32).asUInt
+      io.lsSize := MuxLookup(io.funct3, 0.U)(Seq(
+        0.U -> 1.U, 
+        1.U -> 2.U,
+        2.U -> 4.U
+      ))
     }
     is("b1100011".U) { // Branches (beq, bne, blt, bge, bltu, bgeu)
       io.aluSrcA := 0.U     // rs1
@@ -118,7 +144,7 @@ class Decode extends Module {
     is("b1101111".U) { // JAL: rd = PC + 4, PC = PC + imm
       io.regWrite := true.B
       io.memToReg := 2.U // write PC + 4 to rd
-      io.jump     := true.B
+      io.jal     := true.B
       io.imm := Cat(io.instruction(31), io.instruction(19, 12), io.instruction(20), io.instruction(30, 21), 0.U(1.W))
         .asSInt.pad(32).asUInt
 

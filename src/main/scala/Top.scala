@@ -61,24 +61,30 @@ class Top(fileProgram: String) extends Module {
   decodeModule.io.instruction := readModule.io.instruction_out
 
 // Execute --------------------
-  executeModule.io.opcode  := decodeModule.io.opcode
+  // executeModule.io.opcode  := decodeModule.io.opcode
   executeModule.io.funct3  := decodeModule.io.funct3
-  executeModule.io.funct7  := decodeModule.io.funct7
   executeModule.io.imm     := decodeModule.io.imm
   executeModule.io.rs1_val := regs(decodeModule.io.rs1)
   executeModule.io.rs2_val := regs(decodeModule.io.rs2)
-// executeModule.io.rd := decodeModule.io.rd // ikke behov for, vi ændrer registers værdi i top ikke i execute
   executeModule.io.pc := io.pc_out
 
+  executeModule.io.aluOp := decodeModule.io.aluOp
+  executeModule.io.useImm := decodeModule.io.aluSrcB
+  executeModule.io.isLui := decodeModule.io.lui
+  executeModule.io.isAuipc := decodeModule.io.auipc
+  executeModule.io.isBranch := decodeModule.io.branch
+  executeModule.io.isJal := decodeModule.io.jal
+  executeModule.io.isJalr := decodeModule.io.jalr
+
 // MemReadLoad ------------
-  memoryModule.io.loadReady := executeModule.io.loadReady
-  memoryModule.io.saveReady := executeModule.io.saveReady
-  memoryModule.io.size      := executeModule.io.LS_size
+  memoryModule.io.loadReady := decodeModule.io.memRead
+  memoryModule.io.saveReady := decodeModule.io.memWrite
+  memoryModule.io.size      := decodeModule.io.lsSize
   memoryModule.io.address   := executeModule.io.address
-  memoryModule.io.wordIn    := executeModule.io.data
+  memoryModule.io.wordIn    := regs(decodeModule.io.rd)
 
 // Register update:
-  when(executeModule.io.writeEnable)(regs(decodeModule.io.rd) := executeModule.io.data)
+  when(decodeModule.io.regWrite)(regs(decodeModule.io.rd) := executeModule.io.data)
 
 // Debug --------------------
   // readmodule

@@ -26,7 +26,7 @@ The program stops at `ecall` with a7 = 10, or when the PC goes past the end of t
 ## Requirements
 
 - Java 17+ and sbt
-- For the FPGA: Vivado, a Basys 3 board and Python 3 with pyserial (`pip install pyserial`)
+- For the FPGA: Vivado, a Basys 3 board and Python 3 with pyserial (`sudo apt install python3-serial` on Ubuntu)
 
 ## Run all tests
 
@@ -48,9 +48,13 @@ It prints x0-x31 and writes `program/program.dump` (same format as `.res`).
 2. `sbt run` generates `generated/Basys3Top.v`.
 3. Open `fpga/vivado/vivadoproject/vivadoproject.xpr`. Vivado doesn't always see that the `.v` file changed, so reset the synthesis run first.
 4. Generate bitstream (it synthesizes for you) and program the board.
-5. Run the reader with the board's COM port, then press btnC:
+5. Run the reader with the board's serial port, then press btnC:
 
-       python fpga/read_regs.py COM4
+       python3 fpga/read_regs.py /dev/ttyUSB1
+
+   The board shows up as two ports (usually `/dev/ttyUSB0` and `/dev/ttyUSB1`), and the UART is normally the second one.
+   If you get "permission denied", add yourself to the `dialout` group (`sudo usermod -aG dialout $USER`, then log out and in).
+   On Windows use the COM port from Device Manager instead, e.g. `COM4`.
 
    It prints the registers and says `MATCHES .res` or `DIFFERENT .res`.
 

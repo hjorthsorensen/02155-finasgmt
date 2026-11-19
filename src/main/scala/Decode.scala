@@ -17,19 +17,18 @@ class Decode extends Module {
 
     // -- Decode Controls -- //
     val regWrite = Output(Bool())    // Write to register file or not
-    val aluSrcA  = Output(UInt(2.W)) // 0 = rs1, 1 = PC, 2 = zero
     val aluSrcB  = Output(Bool())    // 0 = rs2, 1 = immediate
     val aluOp    = Output(UInt(4.W)) // funct7(5), funct3: 0=add 8=sub 1=sll 2=slt 3=sltu 4=xor 5=srl 13=sra 6=or 7=and
     val isEcall  = Output(Bool())    // Is the instruction an ecall
     val memRead  = Output(UInt(2.W)) // Read from data memory (loads) 2Wide to do Unsigned loads.
     val memWrite = Output(Bool())    // Write to data memory (stores)
-    val memToReg = Output(UInt(2.W)) // Value written to rd: 0 = ALU result, 1 = memory, 2 = PC+4 - Hvad er meningen her?
+    val memToReg = Output(UInt(2.W)) // Value written to rd: 0 = Execute result (default), 1 = memory
     val branch   = Output(Bool())    // Conditional branch (beq, bne, blt, bge, bltu, bgeu)
     val jal     = Output(Bool())    // jal
     val jalr     = Output(Bool())    // jalr
     val lui = Output(Bool())
     val auipc = Output(Bool())
-    val lsSize = Output(UInt(2.W)) // What size to load/save in memory
+    val lsSize = Output(UInt(3.W)) // What size to load/save in memory
   })
 
   // -- Decode the instruction -- //
@@ -43,7 +42,6 @@ class Decode extends Module {
 
   // -- Default values -- //
   io.regWrite := false.B
-  io.aluSrcA  := 0.U
   io.aluSrcB  := false.B
   io.aluOp    := 0.U // add instruction per default
   io.isEcall  := false.B
@@ -62,36 +60,24 @@ class Decode extends Module {
   switch(io.opcode) {
     is("b0110011".U) { // R-type (add, sub, sll, srl, sra, slt, sltu, and, or, xor)
       io.regWrite := true.B
-      io.aluSrcA  := 0.U     // need rs1
       io.aluSrcB  := false.B // need rs2
       io.aluOp    := Cat(io.funct7(5), io.funct3)
-      io.memToReg := 0.U     // write ALU result to rd
     }
     is("b0010011".U) { // I-type (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
       io.regWrite := true.B
-      io.aluSrcA  := 0.U    // need rs1
       io.aluSrcB  := true.B // need immediate
       val alt = io.funct3 === "b101".U && io.funct7(5)
       // funct7(5) selects srai over srli. for all other I-type operations, it is an immediate bit, so alt = 0
       io.aluOp    := Cat(alt, io.funct3)
-      io.memToReg := 0.U // write ALU result to rd
       io.imm      := io.instruction(31, 20).asSInt.pad(32).asUInt
     }
     is("b0110111".U) { // LUI (0 + imm)
       io.regWrite := true.B
-      io.aluSrcA  := 2.U    // zero
-      io.aluSrcB  := true.B // need immediate
-      io.aluOp    := 0.U    // add
-      io.memToReg := 0.U    // write ALU result to rd
       io.imm      := Cat(io.instruction(31, 12), 0.U(12.W))
       io.lui := true.B
     }
     is("b0010111".U) { // auipc (pc + imm)
       io.regWrite := true.B
-      io.aluSrcA  := 1.U    // pc
-      io.aluSrcB  := true.B // need immediate
-      io.aluOp    := 0.U    // add
-      io.memToReg := 0.U    // write ALU result to rd
       io.imm      := Cat(io.instruction(31, 12), 0.U(12.W))
       io.auipc := true.B
     }
@@ -100,15 +86,14 @@ class Decode extends Module {
     }
     is("b0000011".U) { // Loads (lb, lh, lw, lbu, lhu): rd = mem[rs1 + imm]
       io.regWrite := true.B
-      io.aluSrcA  := 0.U    // rs1
       io.aluSrcB  := true.B // immediate
       io.aluOp    := 0.U    // add -> address
       io.memRead := MuxLookup(io.funct3,0.U)(Seq(
         0.U -> "b11".U, 
         1.U -> "b11".U,
         2.U -> "b11".U,
-        4.U -> "b10".U,
-        5.U -> "b10".U
+        4.U -> "b01".U,
+        5.U -> "b01".U
       ))
       io.memToReg := 1.U    // write memory data to rd
       io.imm      := io.instruction(31, 20).asSInt.pad(32).asUInt
@@ -121,7 +106,6 @@ class Decode extends Module {
       ))
     }
     is("b0100011".U) { // Stores (sb, sh, sw): mem[rs1 + imm] = rs2
-      io.aluSrcA  := 0.U    // rs1
       io.aluSrcB  := true.B // immediate
       io.aluOp    := 0.U    // add -> address
       io.memWrite := true.B
@@ -134,7 +118,6 @@ class Decode extends Module {
       ))
     }
     is("b1100011".U) { // Branches (beq, bne, blt, bge, bltu, bgeu)
-      io.aluSrcA := 0.U     // rs1
       io.aluSrcB := false.B // rs2
       io.branch  := true.B
       // compare (selected by funct3) is done in Execute; target = PC + imm
@@ -143,7 +126,6 @@ class Decode extends Module {
     }
     is("b1101111".U) { // JAL: rd = PC + 4, PC = PC + imm
       io.regWrite := true.B
-      io.memToReg := 2.U // write PC + 4 to rd
       io.jal     := true.B
       io.imm := Cat(io.instruction(31), io.instruction(19, 12), io.instruction(20), io.instruction(30, 21), 0.U(1.W))
         .asSInt.pad(32).asUInt
@@ -151,10 +133,8 @@ class Decode extends Module {
     }
     is("b1100111".U) { // JALR: rd = PC + 4, PC = (rs1 + imm) & ~1
       io.regWrite := true.B
-      io.aluSrcA  := 0.U    // rs1
       io.aluSrcB  := true.B // immediate
       io.aluOp    := 0.U    // add -> jump target
-      io.memToReg := 2.U    // write PC + 4 to rd
       io.jalr     := true.B
       io.imm      := io.instruction(31, 20).asSInt.pad(32).asUInt
     }

@@ -320,69 +320,142 @@ class MemTest extends AnyFlatSpec with ChiselScalatestTester {
     dut.io.size.poke(4.U)
     dut.io.loadReady.poke(1.U)
     dut.clock.step(1)
-    // byte 0 was never written, so it still holds the program's first byte
-    dut.io.wordOut.expect(((BigInt("012C2C", 16) << 8) | firstByte).U) // 0x012C2C?? (?? = program byte 0)
+    dut.io.wordOut.expect(((BigInt("012C2C", 16) << 8) | firstByte).U)
 
+  }
+}
+
+class DecodeTest extends AnyFlatSpec with ChiselScalatestTester {
+  "DecodeTest" should "decode each instruction type" in test(new Decode) { dut =>
+    println("R-type: sub x3, x1, x2")
+    dut.io.instruction.poke("h_402081B3".U)
+    dut.io.opcode.expect("b0110011".U)
+    dut.io.rd.expect(3.U)
+    dut.io.rs1.expect(1.U)
+    dut.io.rs2.expect(2.U)
+    dut.io.aluOp.expect(8.U) // sub
+    dut.io.regWrite.expect(true.B)
+    dut.io.aluSrcB.expect(false.B) // uses rs2
+
+    println("I-type: addi t0, x0, 125")
+    dut.io.instruction.poke("h_07D00293".U)
+    dut.io.rd.expect(5.U)
+    dut.io.imm.expect(125.U)
+    dut.io.aluOp.expect(0.U)      // add
+    dut.io.aluSrcB.expect(true.B) // uses imm
+
+    println("I-type: srai x5, x6, 3")
+    dut.io.instruction.poke("h_40335293".U)
+    dut.io.aluOp.expect("h_D".U) // sra
+
+    println("Load: lw x5, 8(x2)")
+    dut.io.instruction.poke("h_00812283".U)
+    dut.io.imm.expect(8.U)
+    dut.io.memRead.expect("b11".U) // signed load
+    dut.io.lsSize.expect(4.U)
+    dut.io.memToReg.expect(1.U)
+    dut.io.regWrite.expect(true.B)
+
+    println("Load: lbu x5, 0(x2)")
+    dut.io.instruction.poke("h_00014283".U)
+    dut.io.memRead.expect("b01".U) // unsigned load
+    dut.io.lsSize.expect(1.U)
+
+    println("Store: sw x5, 8(x2)")
+    dut.io.instruction.poke("h_00512423".U)
+    dut.io.imm.expect(8.U)
+    dut.io.rs2.expect(5.U)
+    dut.io.memWrite.expect(true.B)
+    dut.io.regWrite.expect(false.B)
+    dut.io.lsSize.expect(4.U)
+
+    println("Branch: beq x1, x2, -4")
+    dut.io.instruction.poke("h_FE208EE3".U)
+    dut.io.imm.expect("h_FFFFFFFC".U) // -4
+    dut.io.branch.expect(true.B)
+    dut.io.regWrite.expect(false.B)
+
+    println("JAL: jal ra, 8")
+    dut.io.instruction.poke("h_008000EF".U)
+    dut.io.imm.expect(8.U)
+    dut.io.jal.expect(true.B)
+    dut.io.memToReg.expect(0.U)
+    dut.io.regWrite.expect(true.B)
+
+    println("LUI: lui x5, 0x12345")
+    dut.io.instruction.poke("h_123452B7".U)
+    dut.io.imm.expect("h_12345000".U)
+    dut.io.lui.expect(true.B)
+
+    println("ecall")
+    dut.io.instruction.poke("h_00000073".U)
+    dut.io.isEcall.expect(true.B)
+    dut.io.regWrite.expect(false.B)
+
+    println("Decode test done")
+  }
+}
+
+// runs a program until done (or maxCycles), writes name.dump and returns the 128 dump bytes
+object RunProgram {
+  def apply(dut: Top, name: String, maxCycles: Int): Array[Byte] = {
+    dut.clock.setTimeout(0) // programs can run longer than chiseltest's default 1000 cycles
+    var cycles = 0
+    while (!dut.io.done.peek().litToBoolean && cycles < maxCycles) {
+      dut.clock.step()
+      cycles += 1
+    }
+    assert(dut.io.done.peek().litToBoolean, name + " never finished")
+    println(name + " finished after " + cycles + " cycles")
+
+    // 32 registers, 4 bytes each, little-endian (same as .res)
+    val dump = new Array[Byte](128)
+    for (i <- 0 until 32) {
+      val v = dut.io.dB_regs(i).peekInt()
+      for (b <- 0 until 4) {
+        dump(i * 4 + b) = ((v >> (8 * b)) & 0xff).toByte
+      }
+    }
+    Files.write(Paths.get(name + ".dump"), dump)
+    dump
   }
 }
 
 class CourseTests extends AnyFlatSpec with ChiselScalatestTester {
-  val programs = Seq("task1", "task2", "task3", "task4").flatMap { task =>
-    new File(s"tests/$task").listFiles.filter(_.getName.endsWith(".bin"))
-      .map(f => s"tests/$task/${f.getName.stripSuffix(".bin")}").sorted
+  var programs = Seq[String]()
+  for (task <- Seq("task1", "task2", "task3", "task4")) {
+    for (f <- new File("tests/" + task).listFiles) {
+      if (f.getName.endsWith(".bin")) programs = programs :+ f.getPath.stripSuffix(".bin")
+    }
   }
 
-  for (name <- programs) "Top" should s"run $name" in test(new Top(s"$name.bin")) { dut =>
-    dut.clock.setTimeout(0) // programs can run longer than chiseltest's default 1000 cycles
-    var cycles = 0
-    while (!dut.io.done.peek().litToBoolean && cycles < 10000) {
-      dut.clock.step()
-      cycles += 1
-    }
-    assert(dut.io.done.peek().litToBoolean, s"$name never finished (hit the cycle limit)")
-    println(s"$name finished after $cycles cycles")
-
-    val dump = (0 until 32).flatMap { i =>
-      val v = dut.io.dB_regs(i).peekInt()
-      (0 until 4).map(b => ((v >> (8 * b)) & 0xff).toByte)
-    }.toArray
-    Files.write(Paths.get(s"$name.dump"), dump)
-
-    // .res = 32 registers, 4 bytes each, little-endian
-    val res = Files.readAllBytes(Paths.get(s"$name.res"))
-    for (i <- 0 until 32) {
-      val expected = (0 until 4).map(b => BigInt(res(i * 4 + b) & 0xff) << (8 * b)).sum
-      dut.io.dB_regs(i).expect(expected.U(32.W), s"$name: x$i wrong")
+  for (name <- programs) {
+    "Top" should ("run " + name) in test(new Top(name + ".bin")) { dut =>
+      val dump = RunProgram(dut, name, 10000)
+      val res = Files.readAllBytes(Paths.get(name + ".res"))
+      for (i <- 0 until 128) {
+        assert(dump(i) == res(i), name + ": x" + (i / 4) + " wrong")
+      }
     }
   }
 }
 
-
-// Runs every .bin TA puts in program/: prints registers, writes .dump, .res
+// Runs every .bin in program/: prints registers, writes .dump, compares with .res if there is one
 class Program extends AnyFlatSpec with ChiselScalatestTester {
-  val programs = Option(new File("program").listFiles).getOrElse(Array.empty[File])
-    .filter(_.getName.endsWith(".bin")).map(_.getPath.stripSuffix(".bin")).sorted
-
-  for (name <- programs) {
-    "Top" should s"run $name" in test(new Top(s"$name.bin")) { dut =>
-      dut.clock.setTimeout(0)
-      var cycles = 0
-      while (!dut.io.done.peek().litToBoolean && cycles < 100000) {
-        dut.clock.step()
-        cycles += 1
+  for (f <- new File("program").listFiles) {
+    if (f.getName.endsWith(".bin")) {
+      val name = f.getPath.stripSuffix(".bin")
+      "Top" should ("run " + name) in test(new Top(name + ".bin")) { dut =>
+        val dump = RunProgram(dut, name, 100000)
+        for (i <- 0 until 32) {
+          val v = dut.io.dB_regs(i).peekInt()
+          println("x" + i + " = " + v + " (hex: " + v.toString(16) + ")")
+        }
+        val res = Paths.get(name + ".res")
+        if (Files.exists(res)) {
+          assert(java.util.Arrays.equals(dump, Files.readAllBytes(res)), name + ": registers differ from .res")
+        }
       }
-      assert(dut.io.done.peek().litToBoolean, s"$name never finished (hit the cycle limit)")
-      println(s"$name finished after $cycles cycles")
-
-      // print registers and write binary dump 
-      val regs = (0 until 32).map(i => dut.io.dB_regs(i).peekInt())
-      regs.zipWithIndex.foreach { case (v, i) => println(f"x$i%-2d = 0x$v%08x ($v)") }
-      val dump = regs.flatMap(v => (0 until 4).map(b => ((v >> (8 * b)) & 0xff).toByte)).toArray
-      Files.write(Paths.get(s"$name.dump"), dump)
-
-      // compare with expected results
-      val res = Paths.get(s"$name.res")
-      if (Files.exists(res)) assert(java.util.Arrays.equals(dump, Files.readAllBytes(res)), s"$name: registers differ from .res")
     }
   }
 }

@@ -1,7 +1,7 @@
 import chisel3._
 import chisel3.util._
 //see flow chart here: https://app.diagrams.net/#Lflow%20dia%2009-11-26.drawio#%7B%22pageId%22%3A%22jD8GbT7tNcJAKHjxoHZN%22%7D
-class Top(fileProgram: String) extends Module {
+class Top(fileProgram: String, memBytes: Int = 4096) extends Module {
   val io = IO(new Bundle {
     // -- Inputs -- //
 
@@ -34,7 +34,7 @@ class Top(fileProgram: String) extends Module {
   val executeModule = Module(new Execute())
 
 // -- Memory -- //
-  val memoryModule = Module(new MemReadLoad(fileProgram))
+  val memoryModule = Module(new MemReadLoad(fileProgram, memBytes))
 
   // -- Regs and Wires in top -- //
 //not modules, but has to be created:)//

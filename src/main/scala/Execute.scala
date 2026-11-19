@@ -41,7 +41,7 @@ class Execute extends Module {
     is("h_3".U) {aluOut := (a < b).asUInt}
     is("h_4".U) {aluOut := a ^ b}
     is("h_5".U) {aluOut := a >> shamt}
-    is("h_D".U) {aluOut := (a.asSInt >> shamt).asUInt} // 13=srl
+    is("h_D".U) {aluOut := (a.asSInt >> shamt).asUInt}
     is("h_6".U) {aluOut := a | b}
     is("h_7".U) {aluOut := a & b}
   }

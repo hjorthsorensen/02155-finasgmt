@@ -67,7 +67,7 @@ class Decode extends Module {
       io.regWrite := true.B
       io.aluSrcB  := true.B // need immediate
       val alt = io.funct3 === "b101".U && io.funct7(5)
-      // funct7(5) selects srai over srli. for all other I-type operations, it is an immediate bit, so alt = 0
+      // only srai uses funct7(5), otherwise its part of imm
       io.aluOp    := Cat(alt, io.funct3)
       io.imm      := io.instruction(31, 20).asSInt.pad(32).asUInt
     }
@@ -84,7 +84,7 @@ class Decode extends Module {
     is("b1110011".U) { // ecall
       io.isEcall := true.B
     }
-    is("b0000011".U) { // Loads (lb, lh, lw, lbu, lhu): rd = mem[rs1 + imm]
+    is("b0000011".U) { // Loads (lb, lh, lw, lbu, lhu)
       io.regWrite := true.B
       io.aluSrcB  := true.B // immediate
       io.aluOp    := 0.U    // add -> address
@@ -105,11 +105,10 @@ class Decode extends Module {
         5.U -> 2.U
       ))
     }
-    is("b0100011".U) { // Stores (sb, sh, sw): mem[rs1 + imm] = rs2
+    is("b0100011".U) { // Stores (sb, sh, sw)
       io.aluSrcB  := true.B // immediate
       io.aluOp    := 0.U    // add -> address
       io.memWrite := true.B
-      // regWrite stays false: stores don't write a register
       io.imm := Cat(io.instruction(31, 25), io.instruction(11, 7)).asSInt.pad(32).asUInt
       io.lsSize := MuxLookup(io.funct3, 0.U)(Seq(
         0.U -> 1.U, 
@@ -120,18 +119,17 @@ class Decode extends Module {
     is("b1100011".U) { // Branches (beq, bne, blt, bge, bltu, bgeu)
       io.aluSrcB := false.B // rs2
       io.branch  := true.B
-      // compare (selected by funct3) is done in Execute; target = PC + imm
       io.imm := Cat(io.instruction(31), io.instruction(7), io.instruction(30, 25), io.instruction(11, 8), 0.U(1.W))
         .asSInt.pad(32).asUInt
     }
-    is("b1101111".U) { // JAL: rd = PC + 4, PC = PC + imm
+    is("b1101111".U) { // JAL
       io.regWrite := true.B
       io.jal     := true.B
       io.imm := Cat(io.instruction(31), io.instruction(19, 12), io.instruction(20), io.instruction(30, 21), 0.U(1.W))
         .asSInt.pad(32).asUInt
 
     }
-    is("b1100111".U) { // JALR: rd = PC + 4, PC = (rs1 + imm) & ~1
+    is("b1100111".U) { // JALR
       io.regWrite := true.B
       io.aluSrcB  := true.B // immediate
       io.aluOp    := 0.U    // add -> jump target

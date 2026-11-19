@@ -3,7 +3,7 @@ import chisel3.util._
 import java.nio.file.{Files, Paths}
 import chisel3.util.experimental.loadMemoryFromFileInline
 
-class MemReadLoad(programFile: String) extends Module {
+class MemReadLoad(programFile: String, memBytes: Int = 4096) extends Module {
   val io = IO(new Bundle {
     val loadReady = Input(UInt(2.W)) // 01 = load, 11 = loadSigned
     val saveReady = Input(Bool())
@@ -13,11 +13,14 @@ class MemReadLoad(programFile: String) extends Module {
     val wordOut   = Output(UInt(32.W))
   })
 
-  val memory = Mem(4096, UInt(8.W)) // 4 kb of dynamic ram so all tests pass
+  val memory = Mem(memBytes, UInt(8.W)) // standard is 4 bytes so all tests can pass
 
-  // start data memory with the program file in it, so .data (strings etc.) can be loaded
+  // start data memory with the program file in it, so .data be loaded
   val hexFile = programFile + ".hex"
-  val hexText = Files.readAllBytes(Paths.get(programFile)).map(b => f"${b & 0xff}%02x").mkString("\n")
+  var hexText = ""
+  for (b <- Files.readAllBytes(Paths.get(programFile))) {
+    hexText += "%02x".format(b & 0xff) + "\n" // one byte per line, 2 hex digits
+  }
   Files.write(Paths.get(hexFile), hexText.getBytes)
   loadMemoryFromFileInline(memory, hexFile)
   io.wordOut := 1.U

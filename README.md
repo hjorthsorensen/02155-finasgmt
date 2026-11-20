@@ -27,6 +27,7 @@ The program stops at ecall with a7 = 10, or when the PC goes past the end of the
 
 - Java 17+ and sbt
 - For the FPGA: Vivado 2025.2 or newer (the project file is from 2025.2), a Basys 3 board and Python 3 with pyserial (sudo apt install python3-serial on Ubuntu)
+  - If you use a .venv, install it there instead: pip install pyserial
 
 ## Run all tests
 

@@ -81,12 +81,3 @@ All tests are in `src/test/scala/TopTester.scala`. Run one with sbt "testOnly <N
 | TopTest | Top: PC, instruction fetch, decode fields and final registers for `test_add.bin` | Noah |
 | SimpleTest | Read: prints every instruction in `test_add.bin` | Noah |
 | dataDump | Top: prints all registers after `test_add.bin` | Noah |
-
-## Folders
-
-| Path | What |
-|---|---|
-| `src/` | The CPU and the tests |
-| `tests/` | Course test programs (.bin and expected .res) |
-| `program/` | Put the program you want to run here |
-| `fpga/` | Pin file, UART reader script and Vivado project |

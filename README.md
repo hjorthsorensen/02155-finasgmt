@@ -20,7 +20,7 @@ The program stops at ecall with a7 = 10, or when the PC goes past the end of the
 | Decode | `src/main/scala/Decode.scala` | Mikkel |
 | Execute | `src/main/scala/Execute.scala` | Christian |
 | MemReadLoad | `src/main/scala/MemReadLoad.scala` | Noah |
-| Basys3Top | `src/main/scala/Basys3Top.scala` | Christian, Noah, Mikkel |
+| Basys3Top | `src/main/scala/Basys3Top.scala` | Mikkel |
 | UART | `src/main/scala/Uart.scala` | Martin Schoeberl, changed to 1 stop bit |
 
 ## Requirements
